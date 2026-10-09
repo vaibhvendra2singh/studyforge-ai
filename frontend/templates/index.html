@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StudyForge AI — Lecture Notes to Study Pack Generator</title>
+  <meta name="description" content="Transform lecture notes into structured, exam-ready study packs using Groq's high-speed inference engine." />
+  <link rel="stylesheet" href="/static/css/main.css?v=2.3" />
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+
+<!-- ── FLOATING PILL NAVBAR (MATCHING HYNTS REFERENCE) ────────────────── -->
+<nav class="floating-pill-nav" aria-label="Main Navigation">
+  
+  <!-- Left: Spark Logo + Brand Name -->
+  <a href="#dashboard" class="pill-brand" onclick="switchView('dashboard')">
+    <div class="pill-logo-spark">
+      <!-- 4-pointed spark star glyph -->
+      <svg viewBox="0 0 24 24"><path d="M12 2L13.8 9.2L21 11L13.8 12.8L12 20L10.2 12.8L3 11L10.2 9.2L12 2Z"/></svg>
+    </div>
+    <span>studyforge</span>
+  </a>
+
+  <!-- Large Expanded Logo (Visible on Hover) -->
+  <div class="sidebar-large-logo">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#ffffff" />
+          <stop offset="100%" stop-color="#666666" />
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+      <!-- Abstract Anvil / Spark / Book -->
+      <path d="M50 15L85 35V65L50 85L15 65V35L50 15Z" stroke="url(#logo-gradient)" stroke-width="2" fill="rgba(255,255,255,0.02)"/>
+      <path d="M50 15L50 85M15 35L85 65M15 65L85 35" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+      <circle cx="50" cy="50" r="12" fill="url(#logo-gradient)" filter="url(#glow)" />
+      <path d="M50 38L55 45H63L57 50L59 58L50 53L41 58L43 50L37 45H45L50 38Z" fill="#111" />
+    </svg>
+  </div>
+
+  <!-- Center: Minimalist Nav Links with Icons -->
+  <div class="pill-links">
+    <button class="pill-nav-item" id="pill-nav-dashboard" onclick="switchView('dashboard')">
+      <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      <span>Home</span>
+    </button>
+
+    <button class="pill-nav-item active" id="pill-nav-generator" onclick="switchView('generator')">
+      <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+      <span>Preparation</span>
+    </button>
+
+    <a href="/prompt-lab" class="pill-nav-item" id="pill-nav-lab">
+      <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+      <span>Prompt Lab</span>
+    </a>
+
+    <a href="/evaluation" class="pill-nav-item" id="pill-nav-evaluation">
+      <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      <span>Evaluation</span>
+    </a>
+
+    <button class="pill-nav-item" id="pill-nav-library" onclick="switchView('library')">
+      <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+      <span>Library</span>
+    </button>
+  </div>
+</nav>
+
+<!-- ── MAIN APPLICATION STAGE ───────────────────────────────────────── -->
+<div class="app-container anim-slide-down">
+
+
+  <!-- =================================================================
+       VIEW 1: DASHBOARD (HERO + MARQUEE + METRICS)
+       ================================================================= -->
+  <section id="view-dashboard" class="view-panel" style="display:none;">
+    
+    <!-- Decorative Scrolling Mosaic Backdrop -->
+    <div class="mosaic-backdrop" aria-hidden="true">
+      <div class="mosaic-stage">
+        <div class="mosaic-col col-x3">
+          <div class="mosaic-track track-down">
+            <div class="mosaic-tile tile-photo tile-man"></div>
+            <div class="mosaic-tile tile-white"></div>
+            <div class="mosaic-tile tile-dark"></div>
+            <div class="mosaic-tile tile-photo tile-sculpt"></div>
+            <div class="mosaic-tile tile-cream"></div>
+            <div class="mosaic-tile tile-photo tile-man"></div>
+            <div class="mosaic-tile tile-white"></div>
+            <div class="mosaic-tile tile-dark"></div>
+            <div class="mosaic-tile tile-photo tile-sculpt"></div>
+            <div class="mosaic-tile tile-cream"></div>
+          </div>
+        </div>
+        <div class="mosaic-col col-x2">
+          <div class="mosaic-track track-up">
+            <div class="mosaic-tile tile-cream"></div>
+            <div class="mosaic-tile tile-photo tile-sil"></div>
+            <div class="mosaic-tile tile-white"></div>
+            <div class="mosaic-tile tile-dark"></div>
+            <div class="mosaic-tile tile-photo tile-visit"></div>
+            <div class="mosaic-tile tile-cream"></div>
+            <div class="mosaic-tile tile-photo tile-sil"></div>
+            <div class="mosaic-tile tile-white"></div>
+            <div class="mosaic-tile tile-dark"></div>
+            <div class="mosaic-tile tile-photo tile-visit"></div>
+          </div>
+        </div>
+        <div class="mosaic-col col-x1">
+          <div class="mosaic-track track-down">
+            <div class="mosaic-tile tile-white"></div>
+            <div class="mosaic-tile tile-photo tile-man"></div>
+            <div class="mosaic-tile tile-dark"></div>
+            <div class="mosaic-tile tile-photo tile-sculpt"></div>
+            <div class="mosaic-tile tile-cream"></div>
+            <div class="mosaic-tile tile-white"></div>
+            <div class="mosaic-tile tile-photo tile-man"></div>
+            <div class="mosaic-tile tile-dark"></div>
+            <div class="mosaic-tile tile-photo tile-sculpt"></div>
+            <div class="mosaic-tile tile-cream"></div>
+          </div>
+        </div>
+        <div class="mosaic-col col-c1">
+          <div class="mosaic-track track-down">
+            <div class="mosaic-tile tile-dark"></div>
+            <div class="mosaic-tile tile-photo tile-sculpt"></div>
+            <div class="mosaic-tile tile-photo tile-man"></div>
+            <div class="mosaic-tile tile-white"></div>
+            <div class="mosaic-tile tile-photo tile-visit"></div>
+            <div class="mosaic-tile tile-dark"></div>
+            <div class="mosaic-tile tile-photo tile-sculpt"></div>
+            <div class="mosaic-tile tile-photo tile-man"></div>
+            <div class="mosaic-tile tile-white"></div>
+            <div class="mosaic-tile tile-photo tile-visit"></div>
+          </div>
+        </div>
+        <div class="mosaic-col col-c2">
+          <div class="mosaic-track track-up">
+            <div class="mosaic-tile tile-cream"></div>
+            <div class="mosaic-tile tile-photo tile-visit"></div>
+            <div class="mosaic-tile tile-dark"></div>
+            <div class="mosaic-tile tile-photo tile-sil"></div>
+            <div class="mosaic-tile tile-white"></div>
+            <div class="mosaic-tile tile-cream"></div>
+            <div class="mosaic-tile tile-photo tile-visit"></div>
+            <div class="mosaic-tile tile-dark"></div>
+            <div class="mosaic-tile tile-photo tile-sil"></div>
+            <div class="mosaic-tile tile-white"></div>
+          </div>
+        </div>
+        <div class="mosaic-col col-c3">
+          <div class="mosaic-track track-down">
+            <div class="mosaic-tile tile-white"></div>
+            <div class="mosaic-tile tile-cream"></div>
+            <div class="mosaic-tile tile-photo tile-sil"></div>
+            <div class="mosaic-tile tile-cream"></div>
+            <div class="mosaic-tile tile-photo tile-sculpt"></div>
+            <div class="mosaic-tile tile-white"></div>
+            <div class="mosaic-tile tile-cream"></div>
+            <div class="mosaic-tile tile-photo tile-sil"></div>
+            <div class="mosaic-tile tile-cream"></div>
+            <div class="mosaic-tile tile-photo tile-sculpt"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hero Content -->
+    <div class="hero-editorial" style="text-align:center; display:flex; flex-direction:column; align-items:center;">
+
+      <h1 class="anim-rise anim-rise-d1">Turn Notes Into Study Packs</h1>
+
+      <p class="anim-rise anim-rise-d2" style="max-width:600px; margin: 0 auto 2rem auto;">
+        Paste your lecture notes or upload a file. Get clear summaries, key terms, and practice questions in seconds.
+      </p>
+
+      <div class="hero-actions anim-rise anim-rise-d3">
+        <button class="btn btn-primary btn-lg" onclick="switchView('generator')">
+          <span>MAKE A STUDY PACK</span>
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        </button>
+        <a href="/prompt-lab" class="btn btn-secondary btn-lg">
+          <span>COMPARE PROMPTS</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- 4 Metric Cards (Calculated from Real Data) -->
+    <div class="paper-card card-cream" style="margin-bottom: 2.25rem; z-index: 10; position: relative;">
+      <div class="card-header-editorial" style="border-bottom: 1px solid var(--line); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+        <div class="card-title-group">
+          <span>📈</span>
+          <h3>Your Overview</h3>
+        </div>
+      </div>
+      <div class="metrics-grid" style="margin-bottom: 0;">
+        <div class="metric-card" style="background: rgba(255, 255, 255, 0.45);">
+          <div class="metric-val" id="metric-packs">0</div>
+          <div class="metric-label">Study Packs Made</div>
+        </div>
+
+        <div class="metric-card" style="background: rgba(255, 255, 255, 0.45);">
+          <div class="metric-val" id="metric-questions">0</div>
+          <div class="metric-label">Questions Made</div>
+        </div>
+
+        <div class="metric-card" style="background: rgba(255, 255, 255, 0.45);">
+          <div class="metric-val" id="metric-experiments">0</div>
+          <div class="metric-label">Prompt Runs</div>
+        </div>
+
+        <div class="metric-card" style="background: rgba(255, 255, 255, 0.45);">
+          <div class="metric-val" id="metric-score">0</div>
+          <div class="metric-label">Average Score / 5.0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Start 3-Step Sequence in Simple English -->
+    <div class="paper-card card-white" style="margin-bottom: 2.25rem; z-index: 10; position: relative;">
+      <div class="card-header-editorial" style="border-bottom: 1px solid var(--line); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+        <div class="card-title-group">
+          <span>🚀</span>
+          <h3>How to get started</h3>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem;">
+        <div>
+          <div class="step-num">01</div>
+          <h3 style="margin-bottom:0.4rem;">Add your notes</h3>
+          <p style="font-size:0.88rem; margin:0; color: var(--muted);">Paste your notes or upload a PDF or TXT file directly into the box.</p>
+        </div>
+        <div>
+          <div class="step-num">02</div>
+          <h3 style="margin-bottom:0.4rem;">Choose settings</h3>
+          <p style="font-size:0.88rem; margin:0; color: var(--muted);">Pick your difficulty, number of questions, and prompt type.</p>
+        </div>
+        <div>
+          <div class="step-num">03</div>
+          <h3 style="margin-bottom:0.4rem;">Practice and check</h3>
+          <p style="font-size:0.88rem; margin:0; color: var(--muted);">Take interactive quizzes, check your answers, and save your packs.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lower Row: Recent Study Packs + Dynamic Prompt Benchmark -->
+    <div style="display:grid; grid-template-columns: 1.6fr 1fr; gap:1.5rem; margin-top:2rem;">
+      <div class="paper-card card-white">
+        <div class="card-header-editorial">
+          <div class="card-title-group">
+            <span>📚</span>
+            <h3>Recent Study Packs</h3>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="switchView('library')">See all →</button>
+        </div>
+        <div id="dashboard-recent-packs" style="display:flex; flex-direction:column; gap:0.75rem;"></div>
+      </div>
+
+      <div class="paper-card card-cream">
+        <div class="card-header-editorial">
+          <div class="card-title-group">
+            <span>📊</span>
+            <h3>Prompt Scores</h3>
+          </div>
+
+        </div>
+        <div id="dashboard-benchmark-container">
+          <!-- Populated dynamically from real evaluation runs -->
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+
+  <!-- =================================================================
+       VIEW 2: STUDY PACK GENERATION (PREPARATION)
+       ================================================================= -->
+  <section id="view-generator" class="view-panel" style="display:block;">
+    
+    <div style="margin-bottom:2rem; text-align:center; display:flex; flex-direction:column; align-items:center;">
+
+      <h1>Make a Study Pack</h1>
+      <p style="max-width: 600px;">Paste your notes below to get summaries, key terms, and practice questions.</p>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1.25fr 1fr; gap:1.75rem; align-items:start;">
+      
+      <!-- LEFT: Input Card -->
+      <div class="paper-card card-white">
+        <div style="margin-bottom:1.25rem; padding-bottom:0.75rem; border-bottom:1px solid var(--line);">
+          <span class="form-label" style="margin:0;">YOUR NOTES</span>
+        </div>
+
+        <div class="segment-group" style="margin-bottom:1.25rem; width:100%; display:flex;">
+          <button class="segment-btn active" id="btn-tab-text" style="flex:1;" onclick="switchInputMethod('text')">
+            ✏️ Paste Notes
+          </button>
+          <button class="segment-btn" id="btn-tab-file" style="flex:1;" onclick="switchInputMethod('file')">
+            📄 Upload PDF or TXT
+          </button>
+        </div>
+
+        <div id="panel-input-text">
+          <div class="form-group">
+            <textarea
+              class="form-control"
+              id="notes-input"
+              placeholder="Paste your notes here..."
+              oninput="updateCharCounter()"
+            ></textarea>
+            <div class="char-counter" id="char-counter">0 / 15,000 characters</div>
+          </div>
+        </div>
+
+        <div id="panel-input-file" style="display:none;">
+          <div class="form-group">
+            <div class="upload-zone" id="file-dropzone">
+              <input type="file" id="file-upload-input" accept=".pdf,.txt,.md,.text" onchange="handleFileSelected(event)" />
+              <div class="upload-icon">
+                <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+              </div>
+              <div style="font-weight:700; font-size:0.92rem; margin-bottom:0.25rem;">Click to upload or drag &amp; drop</div>
+              <div style="font-size:0.78rem; color:var(--muted);">PDF or TXT files (Max 15MB)</div>
+            </div>
+            <div id="file-chosen-banner" style="display:none; margin-top:0.75rem; padding:0.75rem 1rem; background:var(--card-cream); border:1px solid var(--line); border-radius:12px; font-size:0.84rem; display:flex; align-items:center; justify-content:space-between;">
+              <span id="file-name-text">filename.pdf</span>
+              <button class="btn btn-ghost btn-sm" onclick="clearSelectedFile()">✕</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="subject-input">Course or Subject (Optional)</label>
+          <input type="text" class="form-control" id="subject-input" placeholder="e.g. Biology, History, Computer Science" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Difficulty Level</label>
+          <div class="segment-group" style="width:100%; display:flex;">
+            <button class="segment-btn" id="diff-btn-beginner" style="flex:1;" onclick="setDifficulty('Beginner')">🌱 Beginner</button>
+            <button class="segment-btn active" id="diff-btn-intermediate" style="flex:1;" onclick="setDifficulty('Intermediate')">⚡ Intermediate</button>
+            <button class="segment-btn" id="diff-btn-advanced" style="flex:1;" onclick="setDifficulty('Advanced')">🔥 Advanced</button>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.25rem;">
+          <div>
+            <label class="form-label">Multiple-Choice Questions</label>
+            <select id="mcq-count-select" class="form-control">
+              <option value="3">3 Questions</option>
+              <option value="5" selected>5 Questions</option>
+              <option value="8">8 Questions</option>
+              <option value="10">10 Questions</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">Short Answer Questions</label>
+            <select id="saq-count-select" class="form-control">
+              <option value="2">2 Questions</option>
+              <option value="3" selected>3 Questions</option>
+              <option value="5">5 Questions</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">AI Intelligence</label>
+          <div class="segment-group" style="width:100%; display:flex; margin-bottom:0.65rem;">
+            <button class="segment-btn" id="ver-btn-v1" style="flex:1;" onclick="setPromptVersion('v1')">Basic</button>
+            <button class="segment-btn active" id="ver-btn-v2" style="flex:1;" onclick="setPromptVersion('v2')">Strict</button>
+            <button class="segment-btn" id="ver-btn-v3" style="flex:1;" onclick="setPromptVersion('v3')">Smart</button>
+          </div>
+          <div class="paper-card card-cream" style="padding:0.75rem 1rem; border-radius:12px;">
+            <p id="prompt-desc-display" style="font-size:0.78rem; margin:0; line-height:1.5;">
+              <strong>Strict Rules:</strong> The AI must follow a strict format and exactly match your settings.
+            </p>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-lg" id="btn-generate-main" style="width:100%; margin-top:0.5rem;" onclick="executeStudyPackGeneration()">
+          <span>⚡ MAKE STUDY PACK</span>
+        </button>
+
+        <div id="gen-error-banner" style="display:none; margin-top:1rem; padding:0.85rem 1.15rem; background:var(--ink); color:var(--white); border-radius:12px; font-size:0.85rem; align-items:center; gap:0.6rem;">
+          <span>⚠️</span>
+          <span id="gen-error-text" style="flex:1;">Error occurred.</span>
+          <button onclick="document.getElementById('gen-error-banner').style.display='none'" style="background:none; border:none; color:var(--white); cursor:pointer;">✕</button>
+        </div>
+
+      </div>
+
+      <!-- RIGHT: Settings Summary & Live Status -->
+      <div style="display:flex; flex-direction:column; gap:1.25rem;">
+        
+        <div class="paper-card card-cream">
+          <div class="card-header-editorial">
+
+            <span class="font-mono" style="font-size:0.72rem;">ACTIVE</span>
+          </div>
+          
+          <div style="display:flex; flex-direction:column; gap:0.75rem; font-size:0.84rem;">
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--line); padding-bottom:0.4rem;">
+              <span style="color:var(--muted);">AI Model:</span>
+              <span class="font-mono" style="font-weight:700;">openai/gpt-oss-120b</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--line); padding-bottom:0.4rem;">
+              <span style="color:var(--muted);">Difficulty:</span>
+              <span id="sum-difficulty" style="font-weight:700;">Intermediate</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--line); padding-bottom:0.4rem;">
+              <span style="color:var(--muted);">Prompt Type:</span>
+              <span id="sum-version" style="font-weight:700;">V2 Structured</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--line); padding-bottom:0.4rem;">
+              <span style="color:var(--muted);">What You Get:</span>
+              <span style="font-weight:700;">Summary + Concepts + Quiz</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="gen-loading-state" class="paper-card card-white" style="display:none; text-align:center; padding:3rem 2rem;">
+          <div style="display:inline-block; width:44px; height:44px; border:3px solid var(--rule); border-top-color:var(--ink); border-radius:50%; animation:spin 0.8s linear infinite; margin-bottom:1.25rem;"></div>
+          <h3 id="loading-quote" style="margin-bottom:0.5rem;">Reading your notes...</h3>
+          <p style="font-size:0.82rem; margin:0;">Creating your study pack...</p>
+        </div>
+
+        <div class="paper-card card-cream">
+          <div class="card-header-editorial">
+            <div class="card-title-group">
+              <span>🛡️</span>
+              <h3>Please note</h3>
+            </div>
+          </div>
+          <p style="font-size:0.82rem; line-height:1.65; margin:0;">
+            The AI only uses your notes. It can still make mistakes, so check important facts.
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- =================================================================
+       VIEW 3: RESULTS & INTERACTIVE QUIZ
+       ================================================================= -->
+  <section id="view-results" class="view-panel" style="display:none;">
+    
+    <div class="results-toolbar">
+      <div>
+
+        <h2 id="result-title-display">Study Pack</h2>
+      </div>
+
+      <div style="display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap;">
+        <span class="stamp stamp-dark" id="res-badge-version">V2 STRUCTURED</span>
+        <span class="stamp" id="res-badge-diff">INTERMEDIATE</span>
+        
+        <button class="btn btn-secondary btn-sm" onclick="copyCurrentOutput()">📋 Copy Text</button>
+        <button class="btn btn-secondary btn-sm" onclick="downloadCurrentOutput()">⬇️ Download File</button>
+        <button class="btn btn-primary btn-sm" onclick="openEvaluationModal()">📊 Score this Pack</button>
+      </div>
+    </div>
+
+    <div class="results-tabs" role="tablist">
+      <button class="results-tab-btn active" id="tab-btn-overview" onclick="switchResultTab('overview')">Overview</button>
+      <button class="results-tab-btn" id="tab-btn-summary" onclick="switchResultTab('summary')">Summary</button>
+      <button class="results-tab-btn" id="tab-btn-concepts" onclick="switchResultTab('concepts')">Key Concepts</button>
+      <button class="results-tab-btn" id="tab-btn-definitions" onclick="switchResultTab('definitions')">Definitions</button>
+      <button class="results-tab-btn" id="tab-btn-mcqs" onclick="switchResultTab('mcqs')">Practice Quiz</button>
+      <button class="results-tab-btn" id="tab-btn-saqs" onclick="switchResultTab('saqs')">Short Answers</button>
+    </div>
+
+    <div id="res-panel-overview" class="paper-card card-white" style="display:block;">
+      <div id="raw-markdown-content" style="line-height:1.75; font-size:0.92rem;"></div>
+    </div>
+
+    <div id="res-panel-summary" class="paper-card card-white" style="display:none;">
+      <h3 style="margin-bottom:1rem; border-bottom:1px solid var(--line); padding-bottom:0.5rem;">📝 Summary</h3>
+      <p id="res-summary-content" style="font-size:1.05rem; line-height:1.8; color:var(--ink);"></p>
+    </div>
+
+    <div id="res-panel-concepts" class="paper-card card-white" style="display:none;">
+      <h3 style="margin-bottom:1.25rem; border-bottom:1px solid var(--line); padding-bottom:0.5rem;">🔑 Key Concepts</h3>
+      <div id="res-concepts-list" style="display:flex; flex-direction:column; gap:1rem;"></div>
+    </div>
+
+    <div id="res-panel-definitions" class="paper-card card-white" style="display:none;">
+      <h3 style="margin-bottom:1.25rem; border-bottom:1px solid var(--line); padding-bottom:0.5rem;">📖 Definitions</h3>
+      <div id="res-definitions-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:1rem;"></div>
+    </div>
+
+    <div id="res-panel-mcqs" class="mcq-container" style="display:none;"></div>
+    <div id="res-panel-saqs" style="display:none; display:flex; flex-direction:column; gap:1.25rem;"></div>
+
+    <div style="margin-top:2rem; display:flex; gap:1rem;">
+      <button class="btn btn-secondary" onclick="switchView('generator')">← Back to Preparation</button>
+      <button class="btn btn-ghost" onclick="executeStudyPackGeneration()">🔄 Try Again</button>
+    </div>
+
+  </section>
+
+
+  <!-- =================================================================
+       VIEW 4: MY STUDY PACKS (LIBRARY)
+       ================================================================= -->
+  <section id="view-library" class="view-panel" style="display:none;">
+    
+    <div style="display:flex; flex-direction:column; align-items:center; margin-bottom:2rem; text-align:center; gap:1rem;">
+      <div>
+
+        <h1>Saved Study Packs</h1>
+        <p style="max-width:600px; margin: 0 auto;">Open your saved study packs, practice quizzes, and notes.</p>
+      </div>
+      <button class="btn btn-primary" onclick="switchView('generator')">+ Make Study Pack</button>
+    </div>
+
+    <div style="display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap; align-items:center;">
+      <div style="flex:1; min-width:240px;">
+        <input type="text" id="library-search-input" class="form-control" placeholder="Search by topic or title..." oninput="renderLibrary()" />
+      </div>
+      <div class="segment-group" id="library-subject-filters">
+        <!-- Rendered dynamically from real study packs -->
+      </div>
+    </div>
+
+    <div id="library-packs-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:1.25rem;"></div>
+
+  </section>
+
+
+  <!-- =================================================================
+       VIEW 5: SETTINGS
+       ================================================================= -->
+  <section id="view-settings" class="view-panel" style="display:none;">
+    
+    <div style="margin-bottom:2rem;">
+
+      <h2>Settings</h2>
+      <p>Check your AI connection, theme, and default options.</p>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+      <div class="paper-card card-white">
+        <div class="card-header-editorial">
+          <div class="card-title-group">
+            <span>⚡</span>
+            <h3>AI Connection</h3>
+          </div>
+          <span class="stamp stamp-dark">ACTIVE</span>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:0.85rem; font-size:0.85rem;">
+          <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--line); padding-bottom:0.5rem;">
+            <span style="color:var(--muted);">AI Service:</span>
+            <span style="font-weight:700;">Groq Cloud</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--line); padding-bottom:0.5rem;">
+            <span style="color:var(--muted);">Model:</span>
+            <span class="font-mono" style="font-weight:700;">openai/gpt-oss-120b</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--line); padding-bottom:0.5rem;">
+            <span style="color:var(--muted);">API Key:</span>
+            <span class="font-mono">gsk_••••••••••••••••3pM1cMON</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--line); padding-bottom:0.5rem;">
+            <span style="color:var(--muted);">Status:</span>
+            <span style="color:var(--ink); font-weight:700;">Connected</span>
+          </div>
+        </div>
+
+        <button class="btn btn-secondary btn-sm" style="margin-top:1.25rem;" onclick="testApiHealth()">
+          Test Connection
+        </button>
+      </div>
+
+      <div class="paper-card card-white">
+        <div class="card-header-editorial">
+          <div class="card-title-group">
+            <span>🎨</span>
+            <h3>Appearance</h3>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Theme</label>
+          <div class="segment-group" style="width:100%; display:flex;">
+            <button class="segment-btn active" id="theme-btn-paper" style="flex:1;" onclick="setTheme('paper')">Crushed Paper</button>
+            <button class="segment-btn" id="theme-btn-dark" style="flex:1;" onclick="setTheme('dark')">Dark Mode</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Default Difficulty</label>
+          <select id="pref-default-diff" class="form-control" onchange="savePreferences()">
+            <option value="Beginner">Beginner</option>
+            <option value="Intermediate" selected>Intermediate</option>
+            <option value="Advanced">Advanced</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Moving Images</label>
+          <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.86rem; cursor:pointer;">
+            <input type="checkbox" id="pref-reduced-motion" onchange="toggleMotionPreference(this.checked)" />
+            <span>Pause background image movement</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+</div>
+
+<!-- ── QUICK RUBRIC EVALUATION MODAL ──────────────────────────────────── -->
+<div class="modal-backdrop" id="eval-modal-backdrop" onclick="if(event.target===this) closeEvaluationModal()">
+  <div class="modal-sheet" role="dialog" aria-modal="true" aria-labelledby="eval-modal-title">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; border-bottom:1px solid var(--line); padding-bottom:0.75rem;">
+      <h3 id="eval-modal-title">📊 Score this Study Pack</h3>
+      <button class="btn btn-ghost btn-sm" onclick="closeEvaluationModal()">✕</button>
+    </div>
+
+    <p style="font-size:0.82rem; margin-bottom:1.25rem;">
+      Rate this study pack from 1 (poor) to 5 (excellent) on each point below.
+    </p>
+
+    <div class="form-group">
+      <label class="form-label" for="eval-input-sample-id">Study Pack Name or ID</label>
+      <input type="text" id="eval-input-sample-id" class="form-control" placeholder="e.g. Test Run 1" />
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:0.85rem; margin-bottom:1.5rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line); padding-bottom:0.4rem;">
+        <div>
+          <div style="font-weight:700; font-size:0.86rem;">Accuracy</div>
+          <div style="font-size:0.74rem; color:var(--muted);">Matches what is in your notes</div>
+        </div>
+        <div class="star-rating" data-dim="factual_accuracy">
+          <button class="star-btn" onclick="setRubricStar('factual_accuracy', 1)">★</button>
+          <button class="star-btn" onclick="setRubricStar('factual_accuracy', 2)">★</button>
+          <button class="star-btn" onclick="setRubricStar('factual_accuracy', 3)">★</button>
+          <button class="star-btn" onclick="setRubricStar('factual_accuracy', 4)">★</button>
+          <button class="star-btn" onclick="setRubricStar('factual_accuracy', 5)">★</button>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line); padding-bottom:0.4rem;">
+        <div>
+          <div style="font-weight:700; font-size:0.86rem;">Relevance</div>
+          <div style="font-size:0.74rem; color:var(--muted);">Sticks to the main topic</div>
+        </div>
+        <div class="star-rating" data-dim="relevance">
+          <button class="star-btn" onclick="setRubricStar('relevance', 1)">★</button>
+          <button class="star-btn" onclick="setRubricStar('relevance', 2)">★</button>
+          <button class="star-btn" onclick="setRubricStar('relevance', 3)">★</button>
+          <button class="star-btn" onclick="setRubricStar('relevance', 4)">★</button>
+          <button class="star-btn" onclick="setRubricStar('relevance', 5)">★</button>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line); padding-bottom:0.4rem;">
+        <div>
+          <div style="font-weight:700; font-size:0.86rem;">Completeness</div>
+          <div style="font-size:0.74rem; color:var(--muted);">Covers the important parts</div>
+        </div>
+        <div class="star-rating" data-dim="completeness">
+          <button class="star-btn" onclick="setRubricStar('completeness', 1)">★</button>
+          <button class="star-btn" onclick="setRubricStar('completeness', 2)">★</button>
+          <button class="star-btn" onclick="setRubricStar('completeness', 3)">★</button>
+          <button class="star-btn" onclick="setRubricStar('completeness', 4)">★</button>
+          <button class="star-btn" onclick="setRubricStar('completeness', 5)">★</button>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line); padding-bottom:0.4rem;">
+        <div>
+          <div style="font-weight:700; font-size:0.86rem;">Question Quality</div>
+          <div style="font-size:0.74rem; color:var(--muted);">Clear questions with helpful choices</div>
+        </div>
+        <div class="star-rating" data-dim="question_quality">
+          <button class="star-btn" onclick="setRubricStar('question_quality', 1)">★</button>
+          <button class="star-btn" onclick="setRubricStar('question_quality', 2)">★</button>
+          <button class="star-btn" onclick="setRubricStar('question_quality', 3)">★</button>
+          <button class="star-btn" onclick="setRubricStar('question_quality', 4)">★</button>
+          <button class="star-btn" onclick="setRubricStar('question_quality', 5)">★</button>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line); padding-bottom:0.4rem;">
+        <div>
+          <div style="font-weight:700; font-size:0.86rem;">Formatting</div>
+          <div style="font-size:0.74rem; color:var(--muted);">Clean layout and easy to read</div>
+        </div>
+        <div class="star-rating" data-dim="formatting">
+          <button class="star-btn" onclick="setRubricStar('formatting', 1)">★</button>
+          <button class="star-btn" onclick="setRubricStar('formatting', 2)">★</button>
+          <button class="star-btn" onclick="setRubricStar('formatting', 3)">★</button>
+          <button class="star-btn" onclick="setRubricStar('formatting', 4)">★</button>
+          <button class="star-btn" onclick="setRubricStar('formatting', 5)">★</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="eval-input-notes">Notes (Optional)</label>
+      <textarea id="eval-input-notes" class="form-control" style="min-height:80px;" placeholder="Any notes or mistakes you noticed (optional)..."></textarea>
+    </div>
+
+    <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="closeEvaluationModal()">Cancel</button>
+      <button class="btn btn-primary" id="btn-submit-eval" onclick="submitRubricEvaluation()">Save Score</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-msg" id="toast-notification">✓ Done</div>
+<script src="/static/js/main.js?v=2.2"></script>
+
+</body>
+</html>

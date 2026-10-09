@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prompt Lab — StudyForge AI</title>
+  <meta name="description" content="Side-by-side prompt engineering comparison bench. Benchmark V1 Basic, V2 Structured, and V3 Multi-Step prompts." />
+  <link rel="stylesheet" href="/static/css/main.css?v=2.3" />
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+
+<!-- ── FLOATING PILL NAVBAR ─────────────────────────────────────────── -->
+<nav class="floating-pill-nav" aria-label="Main Navigation">
+  <a href="/" class="pill-brand">
+    <div class="pill-logo-spark">
+      <svg viewBox="0 0 24 24"><path d="M12 2L13.8 9.2L21 11L13.8 12.8L12 20L10.2 12.8L3 11L10.2 9.2L12 2Z"/></svg>
+    </div>
+    <span>studyforge</span>
+  </a>
+
+  <!-- Large Expanded Logo (Visible on Hover) -->
+  <div class="sidebar-large-logo">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#ffffff" />
+          <stop offset="100%" stop-color="#666666" />
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+      <path d="M50 15L85 35V65L50 85L15 65V35L50 15Z" stroke="url(#logo-gradient)" stroke-width="2" fill="rgba(255,255,255,0.02)"/>
+      <path d="M50 15L50 85M15 35L85 65M15 65L85 35" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+      <circle cx="50" cy="50" r="12" fill="url(#logo-gradient)" filter="url(#glow)" />
+      <path d="M50 38L55 45H63L57 50L59 58L50 53L41 58L43 50L37 45H45L50 38Z" fill="#111" />
+    </svg>
+  </div>
+
+  <div class="pill-links">
+    <a href="/" class="pill-nav-item">
+      <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      <span>Home</span>
+    </a>
+
+    <a href="/generate" class="pill-nav-item">
+      <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+      <span>Preparation</span>
+    </a>
+
+    <a href="/prompt-lab" class="pill-nav-item active">
+      <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+      <span>Prompt Lab</span>
+    </a>
+
+    <a href="/evaluation" class="pill-nav-item">
+      <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      <span>Evaluation</span>
+    </a>
+
+    <a href="/library" class="pill-nav-item">
+      <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+      <span>Library</span>
+    </a>
+  </div>
+</nav>
+
+<div class="app-container anim-slide-down">
+
+      
+      <!-- Header -->
+      <div style="margin-bottom:2.25rem; text-align:center; display:flex; flex-direction:column; align-items:center;">
+        <h1>Compare Prompts</h1>
+        <p style="max-width:700px; margin: 0 auto;">
+          Run the same lecture notes through three different prompts to see which one gives the best study pack.
+        </p>
+      </div>
+
+      <!-- 3 Prompt Cards in Simple English -->
+      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:1.25rem; margin-bottom:2rem;">
+        <div class="paper-card card-cream">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+            <span class="stamp">VERSION 1</span>
+            <span class="font-mono" style="font-size:0.72rem;">BASIC</span>
+          </div>
+          <h3 style="margin-bottom:0.35rem;">Basic</h3>
+          <p style="font-size:0.82rem; margin:0; line-height:1.6;">A simple instruction. See what the AI does without strict rules.</p>
+        </div>
+
+        <div class="paper-card card-cream">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+            <span class="stamp">VERSION 2</span>
+            <span class="font-mono" style="font-size:0.72rem;">STRICT</span>
+          </div>
+          <h3 style="margin-bottom:0.35rem;">Strict Rules</h3>
+          <p style="font-size:0.82rem; margin:0; line-height:1.6;">The AI must follow a strict format and exactly match your settings.</p>
+        </div>
+
+        <div class="paper-card card-cream">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+            <span class="stamp">VERSION 3</span>
+            <span class="font-mono" style="font-size:0.72rem;">SMART</span>
+          </div>
+          <h3 style="margin-bottom:0.35rem;">Smart Thinking</h3>
+          <p style="font-size:0.82rem; margin:0; line-height:1.6;">The AI takes its time to plan and think before writing the best study pack.</p>
+        </div>
+      </div>
+
+      <!-- Shared Input Panel -->
+      <div class="paper-card card-white" style="margin-bottom:2.25rem;">
+        <div class="card-header-editorial">
+          <div class="card-title-group">
+            <span>⚙️</span>
+            <h3>Your Notes</h3>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 220px; gap:1.5rem; align-items:start;">
+          <div>
+            <textarea id="lab-notes-input" class="form-control" style="min-height:140px;" placeholder="Paste your notes here..."></textarea>
+            <div class="char-counter" id="lab-char-counter">0 / 15,000 characters</div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:1rem;">
+            <div>
+              <label class="form-label">Difficulty Target</label>
+              <div class="segment-group" style="width:100%; display:flex; flex-direction:column; border-radius:14px; gap:2px;">
+                <button class="segment-btn" id="ldiff-beginner" onclick="setLabDifficulty('Beginner')">🌱 Beginner</button>
+                <button class="segment-btn active" id="ldiff-intermediate" onclick="setLabDifficulty('Intermediate')">⚡ Intermediate</button>
+                <button class="segment-btn" id="ldiff-advanced" onclick="setLabDifficulty('Advanced')">🔥 Advanced</button>
+              </div>
+            </div>
+
+            <button class="btn btn-primary btn-lg" id="btn-run-lab" style="width:100%;" onclick="runPromptComparison()">
+              <span>🔬 RUN ALL 3 PROMPTS</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="lab-error-alert" style="display:none; margin-top:1rem; padding:0.8rem 1rem; background:var(--ink); color:var(--white); border-radius:12px; font-size:0.84rem;">
+          <span id="lab-error-text">Error running experiment.</span>
+        </div>
+      </div>
+
+      <!-- Loading Indicator -->
+      <div id="lab-loading-indicator" class="paper-card card-white" style="display:none; text-align:center; padding:3.5rem 2rem; margin-bottom:2rem;">
+        <div style="display:inline-block; width:44px; height:44px; border:3px solid var(--rule); border-top-color:var(--ink); border-radius:50%; animation:spin 0.8s linear infinite; margin-bottom:1.25rem;"></div>
+        <h3 id="lab-loading-text">Running V1, V2, and V3 prompts...</h3>
+        <p style="font-size:0.82rem; margin:0;">Testing all three prompts on your notes. This takes a few seconds.</p>
+      </div>
+
+      <!-- 3-Column Side-by-Side Comparison Output Grid -->
+      <div id="lab-results-grid" style="display:none; margin-bottom:2.5rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+          <h3>Results</h3>
+          <span class="stamp stamp-dark" id="lab-timestamp">Done</span>
+        </div>
+
+        <div class="lab-grid-3col">
+          
+          <!-- Column 1: V1 Basic -->
+          <div class="lab-output-card">
+            <div class="lab-card-header">
+              <span class="stamp">V1 BASIC</span>
+              <span class="font-mono" id="v1-token-badge" style="font-size:0.74rem;">— tokens</span>
+            </div>
+            <div class="lab-output-body" id="lab-out-v1">
+              <!-- Rendered markdown -->
+            </div>
+            <div style="padding:0.75rem 1.25rem; background:var(--paper); border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:0.75rem; color:var(--muted);">Simple prompt</span>
+              <button class="btn btn-ghost btn-sm" onclick="rateLabOutput('v1')">Score V1 ★</button>
+            </div>
+          </div>
+
+          <!-- Column 2: V2 Constraint-Based -->
+          <div class="lab-output-card">
+            <div class="lab-card-header">
+              <span class="stamp stamp-dark">V2 STRUCTURED</span>
+              <span class="font-mono" id="v2-token-badge" style="font-size:0.74rem;">— tokens</span>
+            </div>
+            <div class="lab-output-body" id="lab-out-v2">
+              <!-- Rendered markdown -->
+            </div>
+            <div style="padding:0.75rem 1.25rem; background:var(--paper); border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:0.75rem; color:var(--muted);">Fixed format</span>
+              <button class="btn btn-ghost btn-sm" onclick="rateLabOutput('v2')">Score V2 ★</button>
+            </div>
+          </div>
+
+          <!-- Column 3: V3 Multi-Step -->
+          <div class="lab-output-card">
+            <div class="lab-card-header">
+              <span class="stamp">V3 STEP-BY-STEP</span>
+              <span class="font-mono" id="v3-token-badge" style="font-size:0.74rem;">— tokens</span>
+            </div>
+            <div class="lab-output-body" id="lab-out-v3">
+              <!-- Rendered markdown -->
+            </div>
+            <div style="padding:0.75rem 1.25rem; background:var(--paper); border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:0.75rem; color:var(--muted);">Step-by-step review</span>
+              <button class="btn btn-ghost btn-sm" onclick="rateLabOutput('v3')">Score V3 ★</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Raw Prompt Template Inspector -->
+      <div class="paper-card card-cream">
+        <div class="card-header-editorial" style="cursor:pointer;" onclick="togglePromptInspector()">
+          <div class="card-title-group">
+            <span>🔍</span>
+            <h3>See the prompts</h3>
+          </div>
+          <span class="font-mono" id="inspector-toggle-icon">▼ SHOW</span>
+        </div>
+
+        <div id="inspector-content" style="display:none;">
+          <div class="segment-group" style="margin-bottom:1rem;">
+            <button class="segment-btn active" id="btn-insp-v1" onclick="showTemplate('v1')">V1 Prompt</button>
+            <button class="segment-btn" id="btn-insp-v2" onclick="showTemplate('v2')">V2 Prompt</button>
+            <button class="segment-btn" id="btn-insp-v3" onclick="showTemplate('v3')">V3 Prompt</button>
+          </div>
+          <pre id="raw-template-code" style="background:var(--white); padding:1.25rem; border:1px solid var(--line); border-radius:12px; font-size:0.8rem; overflow-x:auto; white-space:pre-wrap; line-height:1.6;"></pre>
+        </div>
+      </div>
+
+</div>
+
+<!-- Modal & Toast -->
+<div class="toast-msg" id="toast-notification">✓ Done</div>
+<script src="/static/js/main.js?v=2.2"></script>
+
+<script>
+  let labDifficulty = 'Intermediate';
+  let labTemplates = {};
+
+  function setLabDifficulty(diff) {
+    labDifficulty = diff;
+    document.querySelectorAll('[id^="ldiff-"]').forEach(b => b.classList.remove('active'));
+    document.getElementById(`ldiff-${diff.toLowerCase()}`).classList.add('active');
+  }
+
+  async function runPromptComparison() {
+    const notes = document.getElementById('lab-notes-input').value.trim();
+    if (!notes) {
+      alert("Please paste your notes first.");
+      return;
+    }
+
+    const btn = document.getElementById('btn-run-lab');
+    const loading = document.getElementById('lab-loading-indicator');
+    const results = document.getElementById('lab-results-grid');
+    const errAlert = document.getElementById('lab-error-alert');
+
+    btn.disabled = true;
+    loading.style.display = 'block';
+    results.style.display = 'none';
+    errAlert.style.display = 'none';
+
+    try {
+      const resp = await fetch('/api/prompt-lab/compare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          notes: notes,
+          difficulty: labDifficulty,
+          versions: ['v1', 'v2', 'v3']
+        })
+      });
+
+      const data = await resp.json();
+      if (!resp.ok || !data.success) {
+        throw new Error(data.error || 'Could not compare prompts');
+      }
+
+      // Populate results
+      const resV1 = data.results.v1;
+      const resV2 = data.results.v2;
+      const resV3 = data.results.v3;
+
+      document.getElementById('lab-out-v1').innerHTML = marked.parse(resV1.content || resV1.error || 'No content');
+      document.getElementById('lab-out-v2').innerHTML = marked.parse(resV2.content || resV2.error || 'No content');
+      document.getElementById('lab-out-v3').innerHTML = marked.parse(resV3.content || resV3.error || 'No content');
+
+      document.getElementById('v1-token-badge').textContent = resV1.usage?.total_tokens ? `${resV1.usage.total_tokens} tokens` : 'Done';
+      document.getElementById('v2-token-badge').textContent = resV2.usage?.total_tokens ? `${resV2.usage.total_tokens} tokens` : 'Done';
+      document.getElementById('v3-token-badge').textContent = resV3.usage?.total_tokens ? `${resV3.usage.total_tokens} tokens` : 'Done';
+
+      document.getElementById('lab-timestamp').textContent = `Done at ${new Date().toLocaleTimeString()}`;
+      results.style.display = 'block';
+
+    } catch (err) {
+      errAlert.style.display = 'block';
+      document.getElementById('lab-error-text').textContent = err.message;
+    } finally {
+      btn.disabled = false;
+      loading.style.display = 'none';
+    }
+  }
+
+  function rateLabOutput(ver) {
+    window.location.href = `/evaluation?ver=${ver}`;
+  }
+
+  async function togglePromptInspector() {
+    const content = document.getElementById('inspector-content');
+    const icon = document.getElementById('inspector-toggle-icon');
+    if (content.style.display === 'none') {
+      content.style.display = 'block';
+      icon.textContent = '▲ HIDE';
+      if (!labTemplates.v1) {
+        const res = await fetch('/api/prompt-lab/prompts');
+        labTemplates = await res.json();
+        showTemplate('v1');
+      }
+    } else {
+      content.style.display = 'none';
+      icon.textContent = '▼ SHOW';
+    }
+  }
+
+  function showTemplate(v) {
+    document.querySelectorAll('[id^="btn-insp-"]').forEach(b => b.classList.remove('active'));
+    document.getElementById(`btn-insp-${v}`).classList.add('active');
+    document.getElementById('raw-template-code').textContent = labTemplates[v]?.full_prompt || 'Loading...';
+  }
+</script>
+
+</body>
+</html>
