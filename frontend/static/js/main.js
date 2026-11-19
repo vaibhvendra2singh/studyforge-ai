@@ -1080,4 +1080,18 @@ function initEventListeners() {
     if (chk) chk.checked = true;
     toggleMotionPreference(true);
   }
+
+  // Floating nav hover animation & container shift across all views
+  const pillNav = document.querySelector('.floating-pill-nav');
+  const appContainer = document.querySelector('.app-container');
+  if (pillNav && appContainer) {
+    pillNav.addEventListener('mouseenter', () => {
+      document.body.classList.add('nav-is-hovered');
+      appContainer.style.paddingLeft = '17.5rem';
+    });
+    pillNav.addEventListener('mouseleave', () => {
+      document.body.classList.remove('nav-is-hovered');
+      appContainer.style.paddingLeft = '';
+    });
+  }
 }

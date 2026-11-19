@@ -458,8 +458,9 @@ code, pre, .font-mono {
   transition: padding-left 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.floating-pill-nav:hover ~ .app-container {
-  padding-left: 16.5rem;
+.floating-pill-nav:hover ~ .app-container,
+body.nav-is-hovered .app-container {
+  padding-left: 17.5rem !important;
 }
 
 .sub-breadcrumb-bar {
