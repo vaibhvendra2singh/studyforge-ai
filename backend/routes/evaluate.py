@@ -9,25 +9,32 @@ from flask import Blueprint, request, jsonify
 
 evaluate_bp = Blueprint("evaluate", __name__)
 
-# Path to persist evaluations (JSON file)
-EVAL_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "evaluations.json")
+def get_eval_file_path() -> str:
+    # If on Vercel or read-only filesystem, use /tmp
+    if os.environ.get("VERCEL") or not os.access(os.path.dirname(__file__), os.W_OK):
+        return "/tmp/evaluations.json"
+    return os.path.join(os.path.dirname(__file__), "..", "data", "evaluations.json")
 
 
 def load_evaluations() -> list:
-    os.makedirs(os.path.dirname(EVAL_FILE), exist_ok=True)
-    if os.path.exists(EVAL_FILE):
-        try:
-            with open(EVAL_FILE, "r") as f:
+    path = get_eval_file_path()
+    try:
+        if os.path.exists(path):
+            with open(path, "r") as f:
                 return json.load(f)
-        except Exception:
-            return []
+    except Exception:
+        pass
     return []
 
 
 def save_evaluations(evals: list):
-    os.makedirs(os.path.dirname(EVAL_FILE), exist_ok=True)
-    with open(EVAL_FILE, "w") as f:
-        json.dump(evals, f, indent=2)
+    path = get_eval_file_path()
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w") as f:
+            json.dump(evals, f, indent=2)
+    except Exception as e:
+        print(f"Error saving evaluations: {e}")
 
 
 @evaluate_bp.route("/evaluate", methods=["POST"])
