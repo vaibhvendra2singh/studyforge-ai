@@ -1,4 +1,5 @@
 import sys
+import urllib.parse
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
@@ -6,28 +7,37 @@ sys.path.insert(0, str(ROOT_DIR / "backend"))
 
 from app import app as flask_app
 
-class FixPathMiddleware:
-    def __init__(self, wsgi_app):
-        self.wsgi_app = wsgi_app
+# Absolute path bindings so template and static assets resolve reliably on Vercel
+flask_app.static_folder = str(ROOT_DIR / "frontend" / "static")
+flask_app.template_folder = str(ROOT_DIR / "frontend" / "templates")
+
+# Fallback route registrations in case the entrypoint is hit directly
+@flask_app.route("/api/index")
+@flask_app.route("/api/index.py")
+def vercel_entrypoint_fallback():
+    return flask_app.view_functions["index"]()
+
+class VercelWSGIRouter:
+    def __init__(self, app):
+        self.app = app
 
     def __call__(self, environ, start_response):
-        # Retrieve actual client path from Vercel proxy headers
-        path = (
-            environ.get("HTTP_X_VERCEL_PATH")
-            or environ.get("HTTP_X_MATCHED_PATH")
-            or environ.get("HTTP_X_FORWARDED_URI")
-            or environ.get("RAW_URI")
-        )
-        if path:
-            environ["PATH_INFO"] = path.split("?")[0]
-        elif environ.get("PATH_INFO", "").startswith("/api/index.py"):
-            rel = environ["PATH_INFO"][len("/api/index.py"):]
-            environ["PATH_INFO"] = rel if rel.startswith("/") else "/" + rel
-
-        # Ensure root path default
-        if not environ.get("PATH_INFO"):
+        qs = environ.get("QUERY_STRING", "")
+        params = urllib.parse.parse_qs(qs)
+        
+        # Check for our explicitly injected route param
+        if "__vercel_route" in params:
+            route = params.get("__vercel_route", ["/"])[0]
+            if not route.startswith("/"):
+                route = "/" + route
+            environ["PATH_INFO"] = route
+            
+            # Rebuild clean query string without __vercel_route
+            remaining = {k: v for k, v in params.items() if k != "__vercel_route"}
+            environ["QUERY_STRING"] = urllib.parse.urlencode(remaining, doseq=True)
+        elif environ.get("PATH_INFO", "").startswith("/api/index"):
             environ["PATH_INFO"] = "/"
 
-        return self.wsgi_app(environ, start_response)
+        return self.app(environ, start_response)
 
-app = FixPathMiddleware(flask_app)
+app = VercelWSGIRouter(flask_app)
