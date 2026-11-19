@@ -152,16 +152,18 @@
             </div>
 
             <div>
-              <label class="form-label">Run Individual</label>
-              <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:0.35rem; margin-bottom:0.6rem;">
-                <button class="btn btn-secondary btn-sm" id="btn-run-v1" onclick="runSinglePrompt('v1')" title="Run Version 1 Basic">V1 Only</button>
-                <button class="btn btn-secondary btn-sm" id="btn-run-v2" onclick="runSinglePrompt('v2')" title="Run Version 2 Strict">V2 Only</button>
-                <button class="btn btn-secondary btn-sm" id="btn-run-v3" onclick="runSinglePrompt('v3')" title="Run Version 3 Smart">V3 Only</button>
+              <label class="form-label">Run Individual Prompt</label>
+              <div style="display:flex; flex-direction:column; gap:0.5rem;">
+                <button class="btn btn-primary" id="btn-run-v1" style="width:100%; justify-content:center; padding:0.65rem 1rem; font-size:0.88rem;" onclick="runSinglePrompt('v1')">
+                  ⚡ Run V1 Basic
+                </button>
+                <button class="btn btn-primary" id="btn-run-v2" style="width:100%; justify-content:center; padding:0.65rem 1rem; font-size:0.88rem;" onclick="runSinglePrompt('v2')">
+                  ⚡ Run V2 Strict
+                </button>
+                <button class="btn btn-primary" id="btn-run-v3" style="width:100%; justify-content:center; padding:0.65rem 1rem; font-size:0.88rem;" onclick="runSinglePrompt('v3')">
+                  ⚡ Run V3 Smart
+                </button>
               </div>
-
-              <button class="btn btn-primary btn-lg" id="btn-run-lab" style="width:100%;" onclick="runPromptComparison()">
-                <span>🔬 RUN ALL 3 PROMPTS</span>
-              </button>
             </div>
           </div>
         </div>
