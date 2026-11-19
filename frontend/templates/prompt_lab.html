@@ -92,8 +92,8 @@
             <h3 style="margin-bottom:0.35rem;">Basic</h3>
             <p style="font-size:0.82rem; margin:0 0 1rem 0; line-height:1.6;">A simple instruction. See what the AI does without strict rules or structure.</p>
           </div>
-          <button class="btn btn-secondary btn-sm" id="btn-card-v1" style="width:100%; font-weight:600;" onclick="runSinglePrompt('v1')">
-            Run V1 Basic Only
+          <button class="btn btn-secondary btn-sm" id="btn-card-v1" style="width:100%; font-weight:600;" onclick="runPromptAndOpenPage('v1')">
+            Run V1 (Open Full Page)
           </button>
         </div>
 
@@ -106,8 +106,8 @@
             <h3 style="margin-bottom:0.35rem;">Strict Rules</h3>
             <p style="font-size:0.82rem; margin:0 0 1rem 0; line-height:1.6;">The AI must follow a strict format and exactly match your target difficulty and questions.</p>
           </div>
-          <button class="btn btn-secondary btn-sm" id="btn-card-v2" style="width:100%; font-weight:600;" onclick="runSinglePrompt('v2')">
-            Run V2 Strict Only
+          <button class="btn btn-secondary btn-sm" id="btn-card-v2" style="width:100%; font-weight:600;" onclick="runPromptAndOpenPage('v2')">
+            Run V2 (Open Full Page)
           </button>
         </div>
 
@@ -120,8 +120,8 @@
             <h3 style="margin-bottom:0.35rem;">Smart Thinking</h3>
             <p style="font-size:0.82rem; margin:0 0 1rem 0; line-height:1.6;">The AI takes its time to plan and think step-by-step before synthesizing the best study pack.</p>
           </div>
-          <button class="btn btn-secondary btn-sm" id="btn-card-v3" style="width:100%; font-weight:600;" onclick="runSinglePrompt('v3')">
-            Run V3 Smart Only
+          <button class="btn btn-primary btn-sm" id="btn-card-v3" style="width:100%; font-weight:700;" onclick="runPromptAndOpenPage('v3')">
+            Run V3 Smart (Open Full Page)
           </button>
         </div>
       </div>
@@ -142,16 +142,19 @@
           </div>
 
           <div style="display:flex; flex-direction:column; gap:0.6rem;">
-            <label class="form-label">Run Prompt</label>
+            <label class="form-label">Run Study Pack</label>
             <div style="display:flex; flex-direction:column; gap:0.5rem;">
-              <button class="btn btn-primary" id="btn-run-v1" style="width:100%; justify-content:center; padding:0.75rem 1rem; font-size:0.9rem;" onclick="runSinglePrompt('v1')">
-                Run V1 Basic
+              <button class="btn btn-primary" id="btn-run-v3" style="width:100%; justify-content:center; padding:0.75rem 1rem; font-size:0.92rem; font-weight:700;" onclick="runPromptAndOpenPage('v3')">
+                Run V3 Smart (Full Page)
               </button>
-              <button class="btn btn-primary" id="btn-run-v2" style="width:100%; justify-content:center; padding:0.75rem 1rem; font-size:0.9rem;" onclick="runSinglePrompt('v2')">
-                Run V2 Strict
+              <button class="btn btn-secondary" id="btn-run-v2" style="width:100%; justify-content:center; padding:0.65rem 1rem; font-size:0.86rem;" onclick="runPromptAndOpenPage('v2')">
+                Run V2 Strict (Full Page)
               </button>
-              <button class="btn btn-primary" id="btn-run-v3" style="width:100%; justify-content:center; padding:0.75rem 1rem; font-size:0.9rem;" onclick="runSinglePrompt('v3')">
-                Run V3 Smart
+              <button class="btn btn-secondary" id="btn-run-v1" style="width:100%; justify-content:center; padding:0.65rem 1rem; font-size:0.86rem;" onclick="runPromptAndOpenPage('v1')">
+                Run V1 Basic (Full Page)
+              </button>
+              <button class="btn btn-ghost" id="btn-run-compare" style="width:100%; justify-content:center; padding:0.65rem 1rem; font-size:0.84rem; border:1px dashed var(--line); margin-top:0.25rem;" onclick="runPromptComparison()">
+                Compare All 3 Side by Side
               </button>
             </div>
           </div>
@@ -180,9 +183,12 @@
           
           <!-- Column 1: V1 Basic -->
           <div class="lab-output-card">
-            <div class="lab-card-header">
-              <span class="stamp">V1 BASIC</span>
-              <span class="font-mono" id="v1-token-badge" style="font-size:0.74rem;">Ready</span>
+            <div class="lab-card-header" style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <span class="stamp">V1 BASIC</span>
+                <span class="font-mono" id="v1-token-badge" style="font-size:0.74rem;">Ready</span>
+              </div>
+              <button class="btn btn-primary btn-sm" id="btn-open-header-v1" style="display:none; font-size:0.75rem; padding:0.25rem 0.65rem;" onclick="openLabPackInFullPage('v1')">Open Full Page →</button>
             </div>
             <div class="lab-output-body" id="lab-out-v1">
               <div style="text-align:center; padding:3rem 1rem; color:var(--muted); font-size:0.85rem;">
@@ -190,17 +196,21 @@
                 <button class="btn btn-secondary btn-sm" onclick="runSinglePrompt('v1')">Run V1 Basic</button>
               </div>
             </div>
-            <div style="padding:0.75rem 1.25rem; background:var(--paper); border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;">
-              <button class="btn btn-ghost btn-sm" onclick="runSinglePrompt('v1')">↻ Re-run V1</button>
-              <button class="btn btn-ghost btn-sm" onclick="rateLabOutput('v1')">Score V1 *</button>
+            <div style="padding:0.75rem 1rem; background:var(--paper); border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+              <button class="btn btn-primary btn-sm" id="btn-open-footer-v1" style="flex:1; justify-content:center; display:none;" onclick="openLabPackInFullPage('v1')">Open Full Study Pack →</button>
+              <button class="btn btn-ghost btn-sm" onclick="runSinglePrompt('v1')">Re-run</button>
+              <button class="btn btn-ghost btn-sm" onclick="rateLabOutput('v1')">Score *</button>
             </div>
           </div>
 
           <!-- Column 2: V2 Constraint-Based -->
           <div class="lab-output-card">
-            <div class="lab-card-header">
-              <span class="stamp stamp-dark">V2 STRUCTURED</span>
-              <span class="font-mono" id="v2-token-badge" style="font-size:0.74rem;">Ready</span>
+            <div class="lab-card-header" style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <span class="stamp stamp-dark">V2 STRUCTURED</span>
+                <span class="font-mono" id="v2-token-badge" style="font-size:0.74rem;">Ready</span>
+              </div>
+              <button class="btn btn-primary btn-sm" id="btn-open-header-v2" style="display:none; font-size:0.75rem; padding:0.25rem 0.65rem;" onclick="openLabPackInFullPage('v2')">Open Full Page →</button>
             </div>
             <div class="lab-output-body" id="lab-out-v2">
               <div style="text-align:center; padding:3rem 1rem; color:var(--muted); font-size:0.85rem;">
@@ -208,17 +218,21 @@
                 <button class="btn btn-secondary btn-sm" onclick="runSinglePrompt('v2')">Run V2 Strict</button>
               </div>
             </div>
-            <div style="padding:0.75rem 1.25rem; background:var(--paper); border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;">
-              <button class="btn btn-ghost btn-sm" onclick="runSinglePrompt('v2')">↻ Re-run V2</button>
-              <button class="btn btn-ghost btn-sm" onclick="rateLabOutput('v2')">Score V2 *</button>
+            <div style="padding:0.75rem 1rem; background:var(--paper); border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+              <button class="btn btn-primary btn-sm" id="btn-open-footer-v2" style="flex:1; justify-content:center; display:none;" onclick="openLabPackInFullPage('v2')">Open Full Study Pack →</button>
+              <button class="btn btn-ghost btn-sm" onclick="runSinglePrompt('v2')">Re-run</button>
+              <button class="btn btn-ghost btn-sm" onclick="rateLabOutput('v2')">Score *</button>
             </div>
           </div>
 
           <!-- Column 3: V3 Multi-Step -->
           <div class="lab-output-card">
-            <div class="lab-card-header">
-              <span class="stamp">V3 STEP-BY-STEP</span>
-              <span class="font-mono" id="v3-token-badge" style="font-size:0.74rem;">Ready</span>
+            <div class="lab-card-header" style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <span class="stamp">V3 STEP-BY-STEP</span>
+                <span class="font-mono" id="v3-token-badge" style="font-size:0.74rem;">Ready</span>
+              </div>
+              <button class="btn btn-primary btn-sm" id="btn-open-header-v3" style="display:none; font-size:0.75rem; padding:0.25rem 0.65rem;" onclick="openLabPackInFullPage('v3')">Open Full Page →</button>
             </div>
             <div class="lab-output-body" id="lab-out-v3">
               <div style="text-align:center; padding:3rem 1rem; color:var(--muted); font-size:0.85rem;">
@@ -226,9 +240,10 @@
                 <button class="btn btn-secondary btn-sm" onclick="runSinglePrompt('v3')">Run V3 Smart</button>
               </div>
             </div>
-            <div style="padding:0.75rem 1.25rem; background:var(--paper); border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;">
-              <button class="btn btn-ghost btn-sm" onclick="runSinglePrompt('v3')">↻ Re-run V3</button>
-              <button class="btn btn-ghost btn-sm" onclick="rateLabOutput('v3')">Score V3 *</button>
+            <div style="padding:0.75rem 1rem; background:var(--paper); border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+              <button class="btn btn-primary btn-sm" id="btn-open-footer-v3" style="flex:1; justify-content:center; display:none;" onclick="openLabPackInFullPage('v3')">Open Full Study Pack →</button>
+              <button class="btn btn-ghost btn-sm" onclick="runSinglePrompt('v3')">Re-run</button>
+              <button class="btn btn-ghost btn-sm" onclick="rateLabOutput('v3')">Score *</button>
             </div>
           </div>
 
@@ -259,11 +274,12 @@
 
 <!-- Modal & Toast -->
 <div class="toast-msg" id="toast-notification"> Done</div>
-<script src="/static/js/main.js?v=6.0"></script>
+<script src="/static/js/main.js?v=8.0"></script>
 
 <script>
   let labDifficulty = 'Intermediate';
   let labTemplates = {};
+  const labResults = { v1: null, v2: null, v3: null };
 
   // Character counter
   const notesInput = document.getElementById('lab-notes-input');
@@ -293,6 +309,134 @@
     v3: { name: 'V3 Smart Thinking', badge: 'V3 STEP-BY-STEP' }
   };
 
+  // Helper to extract clean title from notes
+  function getSubjectFromNotes(notes) {
+    if (!notes) return 'Lecture Study Pack';
+    const firstLine = notes.trim().split('\n')[0].replace(/[#*_`]/g, '').trim();
+    if (firstLine.length > 3 && firstLine.length < 50) return firstLine;
+    return 'Lecture Study Pack';
+  }
+
+  // Open study pack in full page results view
+  function openLabPackInFullPage(ver) {
+    const res = labResults[ver];
+    const notes = document.getElementById('lab-notes-input').value.trim();
+
+    let content = res?.content;
+    if (!content) {
+      // If not in memory, check if column has text
+      const outCol = document.getElementById(`lab-out-${ver}`);
+      if (outCol && outCol.innerText && !outCol.innerText.includes('Not run yet') && !outCol.innerText.includes('Generating')) {
+        content = outCol.innerText;
+      }
+    }
+
+    if (!content) {
+      // Run and open
+      runPromptAndOpenPage(ver);
+      return;
+    }
+
+    const title = getSubjectFromNotes(notes);
+    const packData = {
+      id: `pack-${Date.now()}`,
+      content: content,
+      prompt_version: ver,
+      difficulty: labDifficulty,
+      subject: title,
+      date: new Date().toISOString().slice(0, 10),
+      questionCount: 8,
+      notes: notes
+    };
+
+    localStorage.setItem('studyforge_open_pack', JSON.stringify(packData));
+
+    try {
+      let library = JSON.parse(localStorage.getItem('studyforge_library_packs') || '[]');
+      library.unshift(packData);
+      localStorage.setItem('studyforge_library_packs', JSON.stringify(library));
+    } catch(e) {}
+
+    window.location.href = '/#results';
+  }
+
+  // Run a single prompt and automatically open it in the full study pack page
+  async function runPromptAndOpenPage(ver) {
+    const notes = document.getElementById('lab-notes-input').value.trim();
+    if (!notes) {
+      alert("Please paste your notes first.");
+      document.getElementById('lab-notes-input').focus();
+      return;
+    }
+
+    const loading = document.getElementById('lab-loading-indicator');
+    const errAlert = document.getElementById('lab-error-alert');
+    const loadText = document.getElementById('lab-loading-text');
+    const loadSubtext = document.getElementById('lab-loading-subtext');
+
+    if (loading) {
+      loading.style.display = 'block';
+      loading.scrollIntoView({ behavior: 'smooth' });
+    }
+    if (errAlert) errAlert.style.display = 'none';
+    if (loadText) loadText.textContent = `Running ${VERSION_INFO[ver]?.name || ver}...`;
+    if (loadSubtext) loadSubtext.textContent = 'Generating study pack with Groq AI and opening in full page...';
+
+    setButtonsDisabled(true);
+
+    try {
+      const resp = await fetch('/api/prompt-lab/compare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          notes: notes,
+          difficulty: labDifficulty,
+          versions: [ver]
+        })
+      });
+
+      const data = await resp.json();
+      if (!resp.ok || !data.success) {
+        throw new Error(data.error || `Could not run ${VERSION_INFO[ver]?.name}`);
+      }
+
+      const res = data.results && data.results[ver];
+      if (!res || !res.content) throw new Error(`No output received for ${ver}`);
+
+      labResults[ver] = res;
+
+      const title = getSubjectFromNotes(notes);
+      const packData = {
+        id: `pack-${Date.now()}`,
+        content: res.content,
+        prompt_version: ver,
+        difficulty: labDifficulty,
+        subject: title,
+        date: new Date().toISOString().slice(0, 10),
+        questionCount: 8,
+        notes: notes
+      };
+
+      localStorage.setItem('studyforge_open_pack', JSON.stringify(packData));
+
+      try {
+        let library = JSON.parse(localStorage.getItem('studyforge_library_packs') || '[]');
+        library.unshift(packData);
+        localStorage.setItem('studyforge_library_packs', JSON.stringify(library));
+      } catch(e) {}
+
+      window.location.href = '/#results';
+
+    } catch (err) {
+      if (loading) loading.style.display = 'none';
+      if (errAlert) {
+        errAlert.style.display = 'block';
+        document.getElementById('lab-error-text').textContent = err.message;
+      }
+      setButtonsDisabled(false);
+    }
+  }
+
   async function runSinglePrompt(ver) {
     const notes = document.getElementById('lab-notes-input').value.trim();
     if (!notes) {
@@ -305,11 +449,12 @@
     const errAlert = document.getElementById('lab-error-alert');
     const outCol = document.getElementById(`lab-out-${ver}`);
     const tokenBadge = document.getElementById(`${ver}-token-badge`);
+    const headerBtn = document.getElementById(`btn-open-header-${ver}`);
+    const footerBtn = document.getElementById(`btn-open-footer-${ver}`);
 
     results.style.display = 'block';
     errAlert.style.display = 'none';
 
-    // Show spinner inside this specific column
     if (tokenBadge) tokenBadge.textContent = 'Generating...';
     if (outCol) {
       outCol.innerHTML = `
@@ -342,12 +487,22 @@
       const res = data.results && data.results[ver];
       if (!res) throw new Error(`No output received for ${ver}`);
 
+      labResults[ver] = res;
+
       if (outCol) {
-        outCol.innerHTML = marked.parse(res.content || res.error || 'No content generated.');
+        const topBanner = `
+          <div style="display:flex; justify-content:space-between; align-items:center; background:var(--ink); color:var(--white); padding:0.6rem 0.85rem; border-radius:8px; margin-bottom:1rem; font-size:0.82rem;">
+            <span style="font-weight:600;">Full Study Pack Ready</span>
+            <button class="btn btn-secondary btn-sm" style="font-size:0.76rem; padding:0.3rem 0.65rem;" onclick="openLabPackInFullPage('${ver}')">Open Full Page →</button>
+          </div>
+        `;
+        outCol.innerHTML = topBanner + marked.parse(res.content || res.error || 'No content generated.');
       }
       if (tokenBadge) {
         tokenBadge.textContent = res.usage?.total_tokens ? `${res.usage.total_tokens} tokens` : 'Done';
       }
+      if (headerBtn) headerBtn.style.display = 'inline-flex';
+      if (footerBtn) footerBtn.style.display = 'inline-flex';
 
       document.getElementById('lab-timestamp').textContent = `Updated ${new Date().toLocaleTimeString()}`;
 
@@ -379,7 +534,6 @@
     const results = document.getElementById('lab-results-grid');
     const errAlert = document.getElementById('lab-error-alert');
 
-    // Show loading on all 3 columns
     results.style.display = 'block';
     loading.style.display = 'block';
     errAlert.style.display = 'none';
@@ -421,12 +575,24 @@
         const res = data.results && data.results[v];
         const out = document.getElementById(`lab-out-${v}`);
         const badge = document.getElementById(`${v}-token-badge`);
+        const headerBtn = document.getElementById(`btn-open-header-${v}`);
+        const footerBtn = document.getElementById(`btn-open-footer-${v}`);
+
         if (res && out) {
-          out.innerHTML = marked.parse(res.content || res.error || 'No content');
+          labResults[v] = res;
+          const topBanner = `
+            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--ink); color:var(--white); padding:0.6rem 0.85rem; border-radius:8px; margin-bottom:1rem; font-size:0.82rem;">
+              <span style="font-weight:600;">Full Study Pack Ready</span>
+              <button class="btn btn-secondary btn-sm" style="font-size:0.76rem; padding:0.3rem 0.65rem;" onclick="openLabPackInFullPage('${v}')">Open Full Page →</button>
+            </div>
+          `;
+          out.innerHTML = topBanner + marked.parse(res.content || res.error || 'No content');
         }
         if (res && badge) {
           badge.textContent = res.usage?.total_tokens ? `${res.usage.total_tokens} tokens` : 'Done';
         }
+        if (headerBtn) headerBtn.style.display = 'inline-flex';
+        if (footerBtn) footerBtn.style.display = 'inline-flex';
       });
 
       document.getElementById('lab-timestamp').textContent = `Done at ${new Date().toLocaleTimeString()}`;

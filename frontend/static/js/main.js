@@ -63,10 +63,29 @@ document.addEventListener('DOMContentLoaded', () => {
 function initRouting() {
   const hash = window.location.hash.replace('#', '');
   const path = window.location.pathname;
-  const navType = performance.getEntriesByType("navigation")[0]?.type;
 
   if (path === '/prompt-lab' || path === '/evaluation') {
     return; // These are separate server-rendered pages, do not interfere.
+  }
+
+  // Check if there is an active study pack to open from Prompt Lab or library
+  const pendingPackStr = localStorage.getItem('studyforge_open_pack');
+  if (pendingPackStr) {
+    try {
+      const pack = JSON.parse(pendingPackStr);
+      localStorage.removeItem('studyforge_open_pack');
+      appState.lastResult = pack;
+      appState.currentNotes = pack.notes || '';
+      appState.subject = pack.subject || 'Lecture Study Pack';
+      appState.difficulty = pack.difficulty || 'Intermediate';
+      appState.promptVersion = pack.prompt_version || 'v3';
+      renderParsedResults(pack);
+      history.replaceState(null, '', '/#results');
+      switchView('results', false);
+      return;
+    } catch (e) {
+      console.error("Error opening pending pack:", e);
+    }
   }
 
   // Respect the path or hash on page load
@@ -80,7 +99,15 @@ function initRouting() {
     history.replaceState(null, '', '/#settings');
     switchView('settings', false);
   } else if (hash === 'results') {
-    switchView('results', false);
+    if (appState.lastResult) {
+      renderParsedResults(appState.lastResult);
+      switchView('results', false);
+    } else if (appState.libraryPacks && appState.libraryPacks.length > 0) {
+      loadSavedPack(appState.libraryPacks[0].id);
+    } else {
+      history.replaceState(null, '', '/#generator');
+      switchView('generator', false);
+    }
   } else {
     history.replaceState(null, '', '/#dashboard');
     switchView('dashboard', false);
@@ -88,6 +115,24 @@ function initRouting() {
 
   window.addEventListener('hashchange', () => {
     const currentHash = window.location.hash.replace('#', '');
+    if (currentHash === 'results') {
+      const pendingPack = localStorage.getItem('studyforge_open_pack');
+      if (pendingPack) {
+        try {
+          const packData = JSON.parse(pendingPack);
+          localStorage.removeItem('studyforge_open_pack');
+          appState.lastResult = packData;
+          renderParsedResults(packData);
+          switchView('results', false);
+          return;
+        } catch (e) {
+          console.error(e);
+        }
+      } else if (!appState.lastResult && appState.libraryPacks && appState.libraryPacks.length > 0) {
+        loadSavedPack(appState.libraryPacks[0].id);
+        return;
+      }
+    }
     if (['dashboard', 'generator', 'results', 'library', 'settings'].includes(currentHash)) {
       switchView(currentHash, false);
     }
@@ -632,6 +677,7 @@ function downloadDiagramSvg() {
 
 function parseStudyPackContent(text) {
   text = stripEmojis(text || '');
+  const cleanBody = text.replace(/\[ANALYSIS COMPLETE[^\]]*\]/gi, '').trim();
   const result = {
     summary: '',
     concepts: [],
@@ -641,19 +687,23 @@ function parseStudyPackContent(text) {
   };
 
   // Extract Summary
-  const sumMatch = text.match(/##\s*Summary([\s\S]*?)(?=##|$)/i);
+  const sumMatch = cleanBody.match(/(?:##|#|\*\*)\s*(?:\d+[\.:\)]\s*)?Summary(?:\*\*)?([\s\S]*?)(?=(?:##|#|\*\*)\s*(?:\d+[\.:\)]\s*)?(?:Key Concepts|Definitions|Multiple|Practice|MCQs|Short)|$)/i);
   if (sumMatch) {
     result.summary = sumMatch[1].trim();
+  } else {
+    // Fallback if no explicit header
+    const fallbackSum = cleanBody.match(/##\s*Summary([\s\S]*?)(?=##|$)/i);
+    if (fallbackSum) result.summary = fallbackSum[1].trim();
   }
 
   // Extract Key Concepts
-  const conMatch = text.match(/##\s*Key Concepts([\s\S]*?)(?=##|$)/i);
+  const conMatch = cleanBody.match(/(?:##|#|\*\*)\s*(?:\d+[\.:\)]\s*)?Key Concepts(?:\*\*)?([\s\S]*?)(?=(?:##|#|\*\*)\s*(?:\d+[\.:\)]\s*)?(?:Summary|Definitions|Multiple|Practice|MCQs|Short)|$)/i);
   if (conMatch) {
     result.concepts = conMatch[1].trim().split('\n').filter(l => l.trim().startsWith('-') || l.trim().startsWith('*'));
   }
 
   // Extract Definitions — handle bullet (-/*), numbered (1.), or plain **Term**: lines
-  const defMatch = text.match(/##\s*Definitions([\s\S]*?)(?=##|$)/i);
+  const defMatch = cleanBody.match(/(?:##|#|\*\*)\s*(?:\d+[\.:\)]\s*)?Definitions(?:\*\*)?([\s\S]*?)(?=(?:##|#|\*\*)\s*(?:\d+[\.:\)]\s*)?(?:Summary|Key Concepts|Multiple|Practice|MCQs|Short)|$)/i);
   if (defMatch) {
     result.definitions = defMatch[1].trim().split('\n').map(l => l.trim()).filter(l => {
       if (!l || l.length < 3) return false;
@@ -667,7 +717,7 @@ function parseStudyPackContent(text) {
   }
 
   // Extract MCQs (Stateful parser: handles Q1., **Q1.**, Question 1:, 1., **1.**, etc.)
-  const mcqMatch = text.match(/##\s*(?:Multiple[- ]?Choice(?:\s+Questions)?|Practice Quiz|MCQs)([\s\S]*?)(?=##|$)/i);
+  const mcqMatch = cleanBody.match(/(?:##|#|\*\*)\s*(?:\d+[\.:\)]\s*)?(?:Multiple[- ]?Choice(?:\s+Questions)?|Practice Quiz|MCQs)(?:\*\*)?([\s\S]*?)(?=(?:##|#|\*\*)\s*(?:\d+[\.:\)]\s*)?(?:Short Answer|SAQs)|$)/i);
   if (mcqMatch) {
     const rawMcqSection = mcqMatch[1].trim();
     const rawLines = rawMcqSection.split('\n').map(l => l.trim()).filter(l => l.length > 0);
