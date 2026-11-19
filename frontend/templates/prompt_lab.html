@@ -93,7 +93,7 @@
             <p style="font-size:0.82rem; margin:0 0 1rem 0; line-height:1.6;">A simple instruction. See what the AI does without strict rules or structure.</p>
           </div>
           <button class="btn btn-secondary btn-sm" id="btn-card-v1" style="width:100%; font-weight:600;" onclick="runSinglePrompt('v1')">
-            ⚡ Run V1 Basic Only
+            Run V1 Basic Only
           </button>
         </div>
 
@@ -107,7 +107,7 @@
             <p style="font-size:0.82rem; margin:0 0 1rem 0; line-height:1.6;">The AI must follow a strict format and exactly match your target difficulty and questions.</p>
           </div>
           <button class="btn btn-secondary btn-sm" id="btn-card-v2" style="width:100%; font-weight:600;" onclick="runSinglePrompt('v2')">
-            ⚡ Run V2 Strict Only
+            Run V2 Strict Only
           </button>
         </div>
 
@@ -121,7 +121,7 @@
             <p style="font-size:0.82rem; margin:0 0 1rem 0; line-height:1.6;">The AI takes its time to plan and think step-by-step before synthesizing the best study pack.</p>
           </div>
           <button class="btn btn-secondary btn-sm" id="btn-card-v3" style="width:100%; font-weight:600;" onclick="runSinglePrompt('v3')">
-            ⚡ Run V3 Smart Only
+            Run V3 Smart Only
           </button>
         </div>
       </div>
@@ -130,7 +130,7 @@
       <div class="paper-card card-white" style="margin-bottom:2.25rem;">
         <div class="card-header-editorial">
           <div class="card-title-group">
-            <span>⚙️</span>
+            <span></span>
             <h3>Your Notes</h3>
           </div>
         </div>
@@ -145,13 +145,13 @@
             <label class="form-label">Run Prompt</label>
             <div style="display:flex; flex-direction:column; gap:0.5rem;">
               <button class="btn btn-primary" id="btn-run-v1" style="width:100%; justify-content:center; padding:0.75rem 1rem; font-size:0.9rem;" onclick="runSinglePrompt('v1')">
-                ⚡ Run V1 Basic
+                Run V1 Basic
               </button>
               <button class="btn btn-primary" id="btn-run-v2" style="width:100%; justify-content:center; padding:0.75rem 1rem; font-size:0.9rem;" onclick="runSinglePrompt('v2')">
-                ⚡ Run V2 Strict
+                Run V2 Strict
               </button>
               <button class="btn btn-primary" id="btn-run-v3" style="width:100%; justify-content:center; padding:0.75rem 1rem; font-size:0.9rem;" onclick="runSinglePrompt('v3')">
-                ⚡ Run V3 Smart
+                Run V3 Smart
               </button>
             </div>
           </div>
@@ -187,12 +187,12 @@
             <div class="lab-output-body" id="lab-out-v1">
               <div style="text-align:center; padding:3rem 1rem; color:var(--muted); font-size:0.85rem;">
                 <p style="margin-bottom:0.75rem;">Not run yet.</p>
-                <button class="btn btn-secondary btn-sm" onclick="runSinglePrompt('v1')">⚡ Run V1 Basic</button>
+                <button class="btn btn-secondary btn-sm" onclick="runSinglePrompt('v1')">Run V1 Basic</button>
               </div>
             </div>
             <div style="padding:0.75rem 1.25rem; background:var(--paper); border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;">
               <button class="btn btn-ghost btn-sm" onclick="runSinglePrompt('v1')">↻ Re-run V1</button>
-              <button class="btn btn-ghost btn-sm" onclick="rateLabOutput('v1')">Score V1 ★</button>
+              <button class="btn btn-ghost btn-sm" onclick="rateLabOutput('v1')">Score V1 *</button>
             </div>
           </div>
 
@@ -205,12 +205,12 @@
             <div class="lab-output-body" id="lab-out-v2">
               <div style="text-align:center; padding:3rem 1rem; color:var(--muted); font-size:0.85rem;">
                 <p style="margin-bottom:0.75rem;">Not run yet.</p>
-                <button class="btn btn-secondary btn-sm" onclick="runSinglePrompt('v2')">⚡ Run V2 Strict</button>
+                <button class="btn btn-secondary btn-sm" onclick="runSinglePrompt('v2')">Run V2 Strict</button>
               </div>
             </div>
             <div style="padding:0.75rem 1.25rem; background:var(--paper); border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;">
               <button class="btn btn-ghost btn-sm" onclick="runSinglePrompt('v2')">↻ Re-run V2</button>
-              <button class="btn btn-ghost btn-sm" onclick="rateLabOutput('v2')">Score V2 ★</button>
+              <button class="btn btn-ghost btn-sm" onclick="rateLabOutput('v2')">Score V2 *</button>
             </div>
           </div>
 
@@ -223,12 +223,12 @@
             <div class="lab-output-body" id="lab-out-v3">
               <div style="text-align:center; padding:3rem 1rem; color:var(--muted); font-size:0.85rem;">
                 <p style="margin-bottom:0.75rem;">Not run yet.</p>
-                <button class="btn btn-secondary btn-sm" onclick="runSinglePrompt('v3')">⚡ Run V3 Smart</button>
+                <button class="btn btn-secondary btn-sm" onclick="runSinglePrompt('v3')">Run V3 Smart</button>
               </div>
             </div>
             <div style="padding:0.75rem 1.25rem; background:var(--paper); border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;">
               <button class="btn btn-ghost btn-sm" onclick="runSinglePrompt('v3')">↻ Re-run V3</button>
-              <button class="btn btn-ghost btn-sm" onclick="rateLabOutput('v3')">Score V3 ★</button>
+              <button class="btn btn-ghost btn-sm" onclick="rateLabOutput('v3')">Score V3 *</button>
             </div>
           </div>
 
@@ -239,7 +239,7 @@
       <div class="paper-card card-cream">
         <div class="card-header-editorial" style="cursor:pointer;" onclick="togglePromptInspector()">
           <div class="card-title-group">
-            <span>🔍</span>
+            <span></span>
             <h3>See the prompts</h3>
           </div>
           <span class="font-mono" id="inspector-toggle-icon">▼ SHOW</span>
@@ -258,7 +258,7 @@
 </div>
 
 <!-- Modal & Toast -->
-<div class="toast-msg" id="toast-notification">✓ Done</div>
+<div class="toast-msg" id="toast-notification"> Done</div>
 <script src="/static/js/main.js?v=2.2"></script>
 
 <script>

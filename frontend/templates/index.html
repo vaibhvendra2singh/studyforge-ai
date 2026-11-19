@@ -198,7 +198,7 @@
     <div class="paper-card card-cream" style="margin-bottom: 2.25rem; z-index: 10; position: relative;">
       <div class="card-header-editorial" style="border-bottom: 1px solid var(--line); padding-bottom: 1rem; margin-bottom: 1.5rem;">
         <div class="card-title-group">
-          <span>📈</span>
+          <span></span>
           <h3>Your Overview</h3>
         </div>
       </div>
@@ -229,7 +229,7 @@
     <div class="paper-card card-white" style="margin-bottom: 2.25rem; z-index: 10; position: relative;">
       <div class="card-header-editorial" style="border-bottom: 1px solid var(--line); padding-bottom: 1rem; margin-bottom: 1.5rem;">
         <div class="card-title-group">
-          <span>🚀</span>
+          <span></span>
           <h3>How to get started</h3>
         </div>
       </div>
@@ -257,7 +257,7 @@
       <div class="paper-card card-white">
         <div class="card-header-editorial">
           <div class="card-title-group">
-            <span>📚</span>
+            <span></span>
             <h3>Recent Study Packs</h3>
           </div>
           <button class="btn btn-ghost btn-sm" onclick="switchView('library')">See all →</button>
@@ -268,7 +268,7 @@
       <div class="paper-card card-cream">
         <div class="card-header-editorial">
           <div class="card-title-group">
-            <span>📊</span>
+            <span></span>
             <h3>Prompt Scores</h3>
           </div>
 
@@ -303,10 +303,10 @@
 
         <div class="segment-group" style="margin-bottom:1.25rem; width:100%; display:flex;">
           <button class="segment-btn active" id="btn-tab-text" style="flex:1;" onclick="switchInputMethod('text')">
-            ✏️ Paste Notes
+             Paste Notes
           </button>
           <button class="segment-btn" id="btn-tab-file" style="flex:1;" onclick="switchInputMethod('file')">
-            📄 Upload PDF or TXT
+             Upload PDF or TXT
           </button>
         </div>
 
@@ -335,7 +335,7 @@
             </div>
             <div id="file-chosen-banner" style="display:none; margin-top:0.75rem; padding:0.75rem 1rem; background:var(--card-cream); border:1px solid var(--line); border-radius:12px; font-size:0.84rem; display:flex; align-items:center; justify-content:space-between;">
               <span id="file-name-text">filename.pdf</span>
-              <button class="btn btn-ghost btn-sm" onclick="clearSelectedFile()">✕</button>
+              <button class="btn btn-ghost btn-sm" onclick="clearSelectedFile()">x</button>
             </div>
           </div>
         </div>
@@ -348,9 +348,9 @@
         <div class="form-group">
           <label class="form-label">Difficulty Level</label>
           <div class="segment-group" style="width:100%; display:flex;">
-            <button class="segment-btn" id="diff-btn-beginner" style="flex:1;" onclick="setDifficulty('Beginner')">🌱 Beginner</button>
-            <button class="segment-btn active" id="diff-btn-intermediate" style="flex:1;" onclick="setDifficulty('Intermediate')">⚡ Intermediate</button>
-            <button class="segment-btn" id="diff-btn-advanced" style="flex:1;" onclick="setDifficulty('Advanced')">🔥 Advanced</button>
+            <button class="segment-btn" id="diff-btn-beginner" style="flex:1;" onclick="setDifficulty('Beginner')"> Beginner</button>
+            <button class="segment-btn active" id="diff-btn-intermediate" style="flex:1;" onclick="setDifficulty('Intermediate')"> Intermediate</button>
+            <button class="segment-btn" id="diff-btn-advanced" style="flex:1;" onclick="setDifficulty('Advanced')"> Advanced</button>
           </div>
         </div>
 
@@ -375,13 +375,13 @@
         </div>
 
         <button class="btn btn-primary btn-lg" id="btn-generate-main" style="width:100%; margin-top:0.5rem;" onclick="executeStudyPackGeneration()">
-          <span>⚡ MAKE STUDY PACK</span>
+          <span> MAKE STUDY PACK</span>
         </button>
 
         <div id="gen-error-banner" style="display:none; margin-top:1rem; padding:0.85rem 1.15rem; background:var(--ink); color:var(--white); border-radius:12px; font-size:0.85rem; align-items:center; gap:0.6rem;">
-          <span>⚠️</span>
+          <span></span>
           <span id="gen-error-text" style="flex:1;">Error occurred.</span>
-          <button onclick="document.getElementById('gen-error-banner').style.display='none'" style="background:none; border:none; color:var(--white); cursor:pointer;">✕</button>
+          <button onclick="document.getElementById('gen-error-banner').style.display='none'" style="background:none; border:none; color:var(--white); cursor:pointer;">x</button>
         </div>
 
       </div>
@@ -389,7 +389,7 @@
       <!-- BOTTOM: Reshifted "Please note" Banner at the end -->
       <div class="paper-card card-cream" style="padding:1rem 1.35rem; border-radius:14px;">
         <div style="display:flex; align-items:center; gap:0.85rem;">
-          <span style="font-size:1.25rem; flex-shrink:0;">🛡️</span>
+          <span style="font-size:1.25rem; flex-shrink:0;"></span>
           <div>
             <h4 style="margin:0 0 0.2rem 0; font-size:0.92rem; font-weight:700;">Please note</h4>
             <p style="font-size:0.83rem; line-height:1.5; margin:0; color:var(--muted);">
@@ -419,9 +419,9 @@
         <span class="stamp stamp-dark" id="res-badge-version">V2 STRUCTURED</span>
         <span class="stamp" id="res-badge-diff">INTERMEDIATE</span>
         
-        <button class="btn btn-secondary btn-sm" onclick="copyCurrentOutput()">📋 Copy Text</button>
-        <button class="btn btn-secondary btn-sm" onclick="downloadCurrentOutput()">⬇️ Download File</button>
-        <button class="btn btn-primary btn-sm" onclick="openEvaluationModal()">📊 Score this Pack</button>
+        <button class="btn btn-secondary btn-sm" onclick="copyCurrentOutput()">Copy Text</button>
+        <button class="btn btn-secondary btn-sm" onclick="downloadCurrentOutput()">Download File</button>
+        <button class="btn btn-primary btn-sm" onclick="openEvaluationModal()">Score this Pack</button>
       </div>
     </div>
 
@@ -440,17 +440,17 @@
     </div>
 
     <div id="res-panel-summary" class="paper-card card-white" style="display:none;">
-      <h3 style="margin-bottom:1rem; border-bottom:1px solid var(--line); padding-bottom:0.5rem;">📝 Summary</h3>
+      <h3 style="margin-bottom:1rem; border-bottom:1px solid var(--line); padding-bottom:0.5rem;">Summary</h3>
       <p id="res-summary-content" style="font-size:1.05rem; line-height:1.8; color:var(--ink);"></p>
     </div>
 
     <div id="res-panel-concepts" class="paper-card card-white" style="display:none;">
-      <h3 style="margin-bottom:1.25rem; border-bottom:1px solid var(--line); padding-bottom:0.5rem;">🔑 Key Concepts</h3>
+      <h3 style="margin-bottom:1.25rem; border-bottom:1px solid var(--line); padding-bottom:0.5rem;">Key Concepts</h3>
       <div id="res-concepts-list" style="display:flex; flex-direction:column; gap:1rem;"></div>
     </div>
 
     <div id="res-panel-definitions" class="paper-card card-white" style="display:none;">
-      <h3 style="margin-bottom:1.25rem; border-bottom:1px solid var(--line); padding-bottom:0.5rem;">📖 Definitions</h3>
+      <h3 style="margin-bottom:1.25rem; border-bottom:1px solid var(--line); padding-bottom:0.5rem;">Definitions</h3>
       <div id="res-definitions-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:1rem;"></div>
     </div>
 
@@ -458,12 +458,12 @@
       <div style="max-width:820px; margin:0 auto;">
         <img id="res-tab-diagram-img" src="" alt="Educational Diagram" style="width:100%; border-radius:14px; margin-bottom:1.25rem; box-shadow:var(--shadow-paper); border:1px solid var(--line); opacity:0.5; transition:opacity 0.3s;" />
         <div id="res-tab-diagram-error" style="display:none; padding:2rem; background:var(--card-cream); border-radius:12px; margin-bottom:1.25rem; border:1px dashed var(--line);">
-          <div style="font-size:2rem; margin-bottom:0.5rem;">🖼️</div>
+          <div style="font-size:2rem; margin-bottom:0.5rem;"></div>
           <p style="color:var(--muted); font-size:0.9rem; margin:0;">Visual diagram unavailable right now — try regenerating below or check back in a moment.</p>
         </div>
         <h3 id="res-tab-diagram-heading" style="margin-bottom:0.4rem;">Educational Concept Diagram</h3>
         <p style="font-size:0.86rem; color:var(--muted); margin-bottom:1.25rem;">Wikipedia-sourced educational illustration for this topic.</p>
-        <button class="btn btn-primary btn-sm" onclick="regenerateVisualDiagram()">🔄 Try New Diagram</button>
+        <button class="btn btn-primary btn-sm" onclick="regenerateVisualDiagram()">Try New Diagram</button>
       </div>
     </div>
 
@@ -471,8 +471,8 @@
     <div id="res-panel-saqs" style="display:none; display:flex; flex-direction:column; gap:1.25rem;"></div>
 
     <div style="margin-top:2rem; display:flex; gap:1rem;">
-      <button class="btn btn-secondary" onclick="switchView('generator')">← Back to Preparation</button>
-      <button class="btn btn-ghost" onclick="executeStudyPackGeneration()">🔄 Try Again</button>
+      <button class="btn btn-secondary" onclick="switchView('generator')">Back to Preparation</button>
+      <button class="btn btn-ghost" onclick="executeStudyPackGeneration()">Try Again</button>
     </div>
 
     </div>
@@ -523,7 +523,7 @@
       <div class="paper-card card-white">
         <div class="card-header-editorial">
           <div class="card-title-group">
-            <span>⚡</span>
+            <span></span>
             <h3>AI Connection</h3>
           </div>
           <span class="stamp stamp-dark">ACTIVE</span>
@@ -556,7 +556,7 @@
       <div class="paper-card card-white">
         <div class="card-header-editorial">
           <div class="card-title-group">
-            <span>🎨</span>
+            <span></span>
             <h3>Appearance</h3>
           </div>
         </div>
@@ -597,8 +597,8 @@
 <div class="modal-backdrop" id="eval-modal-backdrop" onclick="if(event.target===this) closeEvaluationModal()">
   <div class="modal-sheet" role="dialog" aria-modal="true" aria-labelledby="eval-modal-title">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; border-bottom:1px solid var(--line); padding-bottom:0.75rem;">
-      <h3 id="eval-modal-title">📊 Score this Study Pack</h3>
-      <button class="btn btn-ghost btn-sm" onclick="closeEvaluationModal()">✕</button>
+      <h3 id="eval-modal-title"> Score this Study Pack</h3>
+      <button class="btn btn-ghost btn-sm" onclick="closeEvaluationModal()">x</button>
     </div>
 
     <p style="font-size:0.82rem; margin-bottom:1.25rem;">
@@ -617,11 +617,11 @@
           <div style="font-size:0.74rem; color:var(--muted);">Matches what is in your notes</div>
         </div>
         <div class="star-rating" data-dim="factual_accuracy">
-          <button class="star-btn" onclick="setRubricStar('factual_accuracy', 1)">★</button>
-          <button class="star-btn" onclick="setRubricStar('factual_accuracy', 2)">★</button>
-          <button class="star-btn" onclick="setRubricStar('factual_accuracy', 3)">★</button>
-          <button class="star-btn" onclick="setRubricStar('factual_accuracy', 4)">★</button>
-          <button class="star-btn" onclick="setRubricStar('factual_accuracy', 5)">★</button>
+          <button class="star-btn" onclick="setRubricStar('factual_accuracy', 1)">*</button>
+          <button class="star-btn" onclick="setRubricStar('factual_accuracy', 2)">*</button>
+          <button class="star-btn" onclick="setRubricStar('factual_accuracy', 3)">*</button>
+          <button class="star-btn" onclick="setRubricStar('factual_accuracy', 4)">*</button>
+          <button class="star-btn" onclick="setRubricStar('factual_accuracy', 5)">*</button>
         </div>
       </div>
 
@@ -631,11 +631,11 @@
           <div style="font-size:0.74rem; color:var(--muted);">Sticks to the main topic</div>
         </div>
         <div class="star-rating" data-dim="relevance">
-          <button class="star-btn" onclick="setRubricStar('relevance', 1)">★</button>
-          <button class="star-btn" onclick="setRubricStar('relevance', 2)">★</button>
-          <button class="star-btn" onclick="setRubricStar('relevance', 3)">★</button>
-          <button class="star-btn" onclick="setRubricStar('relevance', 4)">★</button>
-          <button class="star-btn" onclick="setRubricStar('relevance', 5)">★</button>
+          <button class="star-btn" onclick="setRubricStar('relevance', 1)">*</button>
+          <button class="star-btn" onclick="setRubricStar('relevance', 2)">*</button>
+          <button class="star-btn" onclick="setRubricStar('relevance', 3)">*</button>
+          <button class="star-btn" onclick="setRubricStar('relevance', 4)">*</button>
+          <button class="star-btn" onclick="setRubricStar('relevance', 5)">*</button>
         </div>
       </div>
 
@@ -645,11 +645,11 @@
           <div style="font-size:0.74rem; color:var(--muted);">Covers the important parts</div>
         </div>
         <div class="star-rating" data-dim="completeness">
-          <button class="star-btn" onclick="setRubricStar('completeness', 1)">★</button>
-          <button class="star-btn" onclick="setRubricStar('completeness', 2)">★</button>
-          <button class="star-btn" onclick="setRubricStar('completeness', 3)">★</button>
-          <button class="star-btn" onclick="setRubricStar('completeness', 4)">★</button>
-          <button class="star-btn" onclick="setRubricStar('completeness', 5)">★</button>
+          <button class="star-btn" onclick="setRubricStar('completeness', 1)">*</button>
+          <button class="star-btn" onclick="setRubricStar('completeness', 2)">*</button>
+          <button class="star-btn" onclick="setRubricStar('completeness', 3)">*</button>
+          <button class="star-btn" onclick="setRubricStar('completeness', 4)">*</button>
+          <button class="star-btn" onclick="setRubricStar('completeness', 5)">*</button>
         </div>
       </div>
 
@@ -659,11 +659,11 @@
           <div style="font-size:0.74rem; color:var(--muted);">Clear questions with helpful choices</div>
         </div>
         <div class="star-rating" data-dim="question_quality">
-          <button class="star-btn" onclick="setRubricStar('question_quality', 1)">★</button>
-          <button class="star-btn" onclick="setRubricStar('question_quality', 2)">★</button>
-          <button class="star-btn" onclick="setRubricStar('question_quality', 3)">★</button>
-          <button class="star-btn" onclick="setRubricStar('question_quality', 4)">★</button>
-          <button class="star-btn" onclick="setRubricStar('question_quality', 5)">★</button>
+          <button class="star-btn" onclick="setRubricStar('question_quality', 1)">*</button>
+          <button class="star-btn" onclick="setRubricStar('question_quality', 2)">*</button>
+          <button class="star-btn" onclick="setRubricStar('question_quality', 3)">*</button>
+          <button class="star-btn" onclick="setRubricStar('question_quality', 4)">*</button>
+          <button class="star-btn" onclick="setRubricStar('question_quality', 5)">*</button>
         </div>
       </div>
 
@@ -673,11 +673,11 @@
           <div style="font-size:0.74rem; color:var(--muted);">Clean layout and easy to read</div>
         </div>
         <div class="star-rating" data-dim="formatting">
-          <button class="star-btn" onclick="setRubricStar('formatting', 1)">★</button>
-          <button class="star-btn" onclick="setRubricStar('formatting', 2)">★</button>
-          <button class="star-btn" onclick="setRubricStar('formatting', 3)">★</button>
-          <button class="star-btn" onclick="setRubricStar('formatting', 4)">★</button>
-          <button class="star-btn" onclick="setRubricStar('formatting', 5)">★</button>
+          <button class="star-btn" onclick="setRubricStar('formatting', 1)">*</button>
+          <button class="star-btn" onclick="setRubricStar('formatting', 2)">*</button>
+          <button class="star-btn" onclick="setRubricStar('formatting', 3)">*</button>
+          <button class="star-btn" onclick="setRubricStar('formatting', 4)">*</button>
+          <button class="star-btn" onclick="setRubricStar('formatting', 5)">*</button>
         </div>
       </div>
     </div>
@@ -694,8 +694,8 @@
   </div>
 </div>
 
-<div class="toast-msg" id="toast-notification">✓ Done</div>
-<script src="/static/js/main.js?v=2.8"></script>
+<div class="toast-msg" id="toast-notification"> Done</div>
+<script src="/static/js/main.js?v=2.9"></script>
 
 </body>
 </html>

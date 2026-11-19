@@ -31,26 +31,26 @@ try:
     pids = subprocess.check_output(["lsof", "-ti", f":{port}"], stderr=subprocess.DEVNULL).decode().strip().split()
     for pid in pids:
         if pid and int(pid) != os.getpid():
-            print(f"🔄 Freeing port {port} (stopping PID {pid})...")
+            print(f"Freeing port {port} (stopping PID {pid})...")
             os.kill(int(pid), 9)
     time.sleep(0.3)
 except Exception:
     pass
 
 print("=" * 60)
-print("⚡ StudyForge AI — Lecture Notes to Study Pack Generator")
+print("StudyForge AI - Lecture Notes to Study Pack Generator")
 print("=" * 60)
-print(f"📁 Root directory: {ROOT_DIR}")
-print(f"🤖 Groq Model:     {os.environ.get('GROQ_MODEL', 'openai/gpt-oss-120b')}")
-print(f"🌐 Application:    http://localhost:{port}")
-print(f"🔬 Prompt Lab:     http://localhost:{port}/prompt-lab")
-print(f"📊 Evaluation:     http://localhost:{port}/evaluation")
+print(f"Root directory: {ROOT_DIR}")
+print(f"Groq Model:     {os.environ.get('GROQ_MODEL', 'openai/gpt-oss-120b')}")
+print(f"Application:    http://localhost:{port}")
+print(f"Prompt Lab:     http://localhost:{port}/prompt-lab")
+print(f"Evaluation:     http://localhost:{port}/evaluation")
 print("=" * 60)
 
 def open_browser():
     time.sleep(1.2)
     url = f"http://localhost:{port}"
-    print(f"🚀 Opening {url} in your default browser...")
+    print(f"Opening {url} in your default browser...")
     webbrowser.open(url)
 
 # Open browser in background thread

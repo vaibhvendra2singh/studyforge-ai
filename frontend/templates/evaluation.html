@@ -82,9 +82,9 @@
 
       <!-- Quick Explanation Banner -->
       <div class="paper-card card-cream" style="margin-bottom:2rem; padding:1.25rem 1.5rem; display:flex; align-items:center; gap:1.25rem; border-left:4px solid var(--ink);">
-        <span style="font-size:1.8rem;">💡</span>
+        <span style="font-size:1.8rem;"></span>
         <div style="font-size:0.86rem; line-height:1.6;">
-          <strong>How this page works:</strong> Whenever you generate a study pack in <strong>Preparation</strong>, click the <strong>"📊 Score this Pack"</strong> button and rate it with 1 to 5 stars. Your scores automatically update here to show which prompt version works best!
+          <strong>How this page works:</strong> Whenever you generate a study pack in <strong>Preparation</strong>, click the <strong>"Score this Pack"</strong> button and rate it with 1 to 5 stars. Your scores automatically update here to show which prompt version works best!
         </div>
       </div>
 
@@ -119,7 +119,7 @@
       <div class="paper-card card-white" style="margin-bottom:2.25rem;">
         <div class="card-header-editorial">
           <div class="card-title-group">
-            <span>🎯</span>
+            <span></span>
             <h3>How Good Is the AI? (Score Breakdown)</h3>
           </div>
           <span class="stamp">1 TO 5 STARS</span>
@@ -162,7 +162,7 @@
       <div class="paper-card card-white" style="margin-bottom:2.25rem;">
         <div class="card-header-editorial">
           <div class="card-title-group">
-            <span>📈</span>
+            <span></span>
             <h3>Prompt Showdown (Which One Wins?)</h3>
           </div>
           <span class="stamp stamp-dark">HEAD-TO-HEAD</span>
@@ -196,11 +196,11 @@
       <div class="paper-card card-white">
         <div class="card-header-editorial">
           <div class="card-title-group">
-            <span>📋</span>
+            <span></span>
             <h3>History of All Graded Packs</h3>
           </div>
           <div style="display:flex; gap:0.5rem;">
-            <button class="btn btn-ghost btn-sm" onclick="fetchLiveEvaluations()">🔄 Refresh</button>
+            <button class="btn btn-ghost btn-sm" onclick="fetchLiveEvaluations()">Refresh Refresh</button>
           </div>
         </div>
 
@@ -372,7 +372,7 @@
           <td style="font-size:0.78rem; max-width:200px; color:var(--muted);">${item.failure_notes || '—'}</td>
           <td class="font-mono" style="font-size:0.72rem; color:var(--muted);">${item.timestamp ? item.timestamp.slice(0, 10) : '—'}</td>
           <td>
-            <button class="btn btn-ghost btn-sm" onclick="deleteEvalItem('${item.id}')">✕</button>
+            <button class="btn btn-ghost btn-sm" onclick="deleteEvalItem('${item.id}')">x</button>
           </td>
         </tr>
       `).join('');

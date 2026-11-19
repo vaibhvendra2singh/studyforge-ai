@@ -384,7 +384,7 @@ async function executeStudyPackGeneration() {
               const parsed = JSON.parse(trimmed.substring(6));
               if (parsed.chunk) {
                 fullContent += parsed.chunk;
-                rawContainer.innerHTML = marked.parse(fullContent);
+                rawContainer.innerHTML = marked.parse(stripEmojis(fullContent));
               }
             } catch (e) {
               console.error("Stream parse error", e, trimmed);
@@ -410,7 +410,7 @@ async function executeStudyPackGeneration() {
         const fallbackData = await fallbackRes.json();
         if (fallbackRes.ok && fallbackData.success && fallbackData.content) {
           fullContent = fallbackData.content;
-          rawContainer.innerHTML = marked.parse(fullContent);
+          rawContainer.innerHTML = marked.parse(stripEmojis(fullContent));
         }
       }
       
@@ -454,9 +454,17 @@ async function executeStudyPackGeneration() {
   }
 }
 
+// Strip any emoji characters from text
+function stripEmojis(str) {
+  if (!str) return '';
+  return str
+    .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{27BF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1FA00}-\u{1FA9F}\u{FE0F}\u{200D}]/gu, '')
+    .trim();
+}
+
 // ── RESULTS RENDERING & INTERACTIVE MCQS (SECTION 8) ──────────────────────
 function renderParsedResults(data) {
-  const content = data.content || '';
+  const content = stripEmojis(data.content || '');
   
   // 1. Raw Markdown for Overview Tab
   document.getElementById('raw-markdown-content').innerHTML = marked.parse(content);
@@ -525,7 +533,7 @@ function renderParsedResults(data) {
       card.innerHTML = `
         <div style="font-weight:700; font-size:0.98rem; margin-bottom:0.75rem;">Q${idx + 1}. ${saq.question}</div>
         <div class="paper-card card-cream" style="padding:1rem 1.25rem; font-size:0.9rem; line-height:1.6;">
-          <div style="font-family:'JetBrains Mono'; font-weight:700; font-size:0.76rem; margin-bottom:0.35rem;">📌 MODEL ANSWER</div>
+          <div style="font-family:'JetBrains Mono'; font-weight:700; font-size:0.76rem; margin-bottom:0.35rem;">MODEL ANSWER</div>
           ${saq.answer}
         </div>
       `;
@@ -585,6 +593,7 @@ function regenerateVisualDiagram() {
 }
 
 function parseStudyPackContent(text) {
+  text = stripEmojis(text || '');
   const result = {
     summary: '',
     concepts: [],
@@ -594,19 +603,19 @@ function parseStudyPackContent(text) {
   };
 
   // Extract Summary
-  const sumMatch = text.match(/##\s*📝\s*Summary([\s\S]*?)(?=##|$)/i);
+  const sumMatch = text.match(/##\s*Summary([\s\S]*?)(?=##|$)/i);
   if (sumMatch) {
     result.summary = sumMatch[1].trim();
   }
 
   // Extract Key Concepts
-  const conMatch = text.match(/##\s*🔑\s*Key Concepts([\s\S]*?)(?=##|$)/i);
+  const conMatch = text.match(/##\s*Key Concepts([\s\S]*?)(?=##|$)/i);
   if (conMatch) {
     result.concepts = conMatch[1].trim().split('\n').filter(l => l.trim().startsWith('-') || l.trim().startsWith('*'));
   }
 
   // Extract Definitions — handle bullet (-/*), numbered (1.), or plain **Term**: lines
-  const defMatch = text.match(/##\s*📖\s*Definitions([\s\S]*?)(?=##|$)/i);
+  const defMatch = text.match(/##\s*Definitions([\s\S]*?)(?=##|$)/i);
   if (defMatch) {
     result.definitions = defMatch[1].trim().split('\n').filter(l => {
       const t = l.trim();
@@ -621,7 +630,7 @@ function parseStudyPackContent(text) {
   }
 
   // Extract MCQs (Stateful parser: handles Q1., **Q1.**, Question 1:, 1., **1.**, etc.)
-  const mcqMatch = text.match(/##\s*❓\s*(?:Multiple Choice Questions|MCQs)[\s\S]*?([\s\S]*?)(?=##|$)/i);
+  const mcqMatch = text.match(/##\s*(?:Multiple Choice Questions|MCQs)[\s\S]*?([\s\S]*?)(?=##|$)/i);
   if (mcqMatch) {
     const rawMcqSection = mcqMatch[1].trim();
     const rawLines = rawMcqSection.split('\n').map(l => l.trim()).filter(l => l.length > 0);
@@ -642,7 +651,7 @@ function parseStudyPackContent(text) {
     for (const line of lines) {
       const qStartMatch = line.match(/^(?:(?:\*{1,2}|#{1,4}\s*)?(?:Q(?:uestion)?\s*\d+|\d+)[\.:\)]\*{0,2})\s*(.*)/i);
       const isOption = /^[A-D][\).:\s-]/i.test(line);
-      const isCorrect = /(?:Correct Answer|Model Answer|Answer Key|Key|✅|Answer\s*:)/i.test(line);
+      const isCorrect = /(?:Correct Answer|Model Answer|Answer Key|Key||Answer\s*:)/i.test(line);
 
       if (qStartMatch && !isOption && !isCorrect) {
         if (currentMcq && currentMcq.options.length >= 2) {
@@ -658,11 +667,11 @@ function parseStudyPackContent(text) {
         };
       } else if (isOption && currentMcq) {
         // Strip any checkmarks, ticks, or letters from option text
-        const cleanOpt = line.replace(/[✅✔✓]/g, '').trim();
+        const cleanOpt = line.replace(/[]/g, '').trim();
         currentMcq.options.push(cleanOpt);
       } else if (isCorrect && currentMcq) {
-        let cleanAns = line.replace(/.*(?:Correct Answer|Answer Key|Key|✅|Answer)[:\s]*/i, '').trim();
-        cleanAns = cleanAns.replace(/[✅✔✓]/g, '').trim();
+        let cleanAns = line.replace(/.*(?:Correct Answer|Answer Key|Key||Answer)[:\s]*/i, '').trim();
+        cleanAns = cleanAns.replace(/[]/g, '').trim();
         if (cleanAns.includes('—') || cleanAns.includes('-')) {
           const parts = cleanAns.split(/[—\-]/);
           currentMcq.correct = parts[0].trim();
@@ -682,7 +691,7 @@ function parseStudyPackContent(text) {
   }
 
   // Extract Short Answers (Stateful parser)
-  const saqMatch = text.match(/##\s*💬\s*Short Answer Questions([\s\S]*?)(?=##|$)/i);
+  const saqMatch = text.match(/##\s*Short Answer Questions([\s\S]*?)(?=##|$)/i);
   if (saqMatch) {
     const rawSaqSection = saqMatch[1].trim();
     const lines = rawSaqSection.split('\n').map(l => l.trim()).filter(l => l.length > 0);
@@ -690,7 +699,7 @@ function parseStudyPackContent(text) {
 
     for (const line of lines) {
       const qStartMatch = line.match(/^(?:(?:\*{1,2}|#{1,4}\s*)?(?:Q(?:uestion)?\s*\d+|\d+)[\.:\)]\*{0,2})\s*(.*)/i);
-      const isAnswer = /(?:Model Answer|Answer|📌)[:\s]*/i.test(line);
+      const isAnswer = /(?:Model Answer|Answer)[:\s]*/i.test(line);
 
       if (qStartMatch && !isAnswer) {
         if (currentSaq && currentSaq.answer) {
@@ -702,7 +711,7 @@ function parseStudyPackContent(text) {
           answer: ''
         };
       } else if (isAnswer && currentSaq) {
-        const cleanAns = line.replace(/.*(?:Model Answer|Answer|📌)[:\s]*/i, '').trim();
+        const cleanAns = line.replace(/.*(?:Model Answer|Answer|)[:\s]*/i, '').trim();
         currentSaq.answer = cleanAns;
       } else if (currentSaq) {
         if (currentSaq.answer) {
@@ -736,7 +745,7 @@ function createInteractiveMcqCard(mcq, num, difficulty) {
         const letter = String.fromCharCode(65 + i);
         const cleanOpt = opt
           .replace(/^[A-D][\).:\s-]+/i, '')
-          .replace(/[✅✔✓]/g, '')
+          .replace(/[]/g, '')
           .replace(/^\s*[-•]\s*/, '')
           .trim();
         return `
@@ -750,7 +759,7 @@ function createInteractiveMcqCard(mcq, num, difficulty) {
 
     <div style="display:flex; justify-content:space-between; align-items:center;">
       <button class="btn btn-ghost btn-sm" onclick="toggleMcqAnswerReveal(${num})">
-        👁️ Reveal Answer &amp; Explanation
+        Reveal Answer &amp; Explanation
       </button>
       <span style="font-size:0.75rem; color:var(--muted); font-family:'JetBrains Mono';">MCQ #${num}</span>
     </div>
@@ -945,7 +954,7 @@ function renderLibrary() {
       <div style="display:flex; gap:0.5rem; border-top:1px solid var(--line); padding-top:0.85rem;">
         <button class="btn btn-primary btn-sm" style="flex:1;" onclick="loadSavedPack('${pack.id}')">Open Study Pack</button>
         <button class="btn btn-ghost btn-sm" onclick="duplicatePackToEditor('${pack.id}')">Copy to Editor</button>
-        <button class="btn btn-ghost btn-sm" onclick="deleteSavedPack('${pack.id}')">✕</button>
+        <button class="btn btn-ghost btn-sm" onclick="deleteSavedPack('${pack.id}')">x</button>
       </div>
     </div>
   `).join('');
@@ -1202,7 +1211,7 @@ async function testApiHealth() {
 function showNotificationToast(msg) {
   const toast = document.getElementById('toast-notification');
   if (!toast) return;
-  toast.textContent = `✓ ${msg}`;
+  toast.textContent = ` ${msg}`;
   toast.classList.add('show');
   setTimeout(() => {
     toast.classList.remove('show');

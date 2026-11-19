@@ -57,7 +57,7 @@ def test_generate_valid():
     assert body.get("success"), f"Expected success=True: {body}"
     assert "content" in body, "Missing 'content' field"
     assert len(body["content"]) > 100, "Content too short"
-    print("PASS ✓")
+    print("PASS ")
 
 
 def test_generate_empty_notes():
@@ -69,7 +69,7 @@ def test_generate_empty_notes():
     })
     assert status == 422, f"Expected 422, got {status}"
     assert "error" in body
-    print("PASS ✓")
+    print("PASS ")
 
 
 def test_generate_too_short():
@@ -80,7 +80,7 @@ def test_generate_too_short():
         "prompt_version": "v1",
     })
     assert status == 422, f"Expected 422, got {status}"
-    print("PASS ✓")
+    print("PASS ")
 
 
 def test_generate_invalid_difficulty():
@@ -91,7 +91,7 @@ def test_generate_invalid_difficulty():
         "prompt_version": "v2",
     })
     assert status == 422, f"Expected 422, got {status}"
-    print("PASS ✓")
+    print("PASS ")
 
 
 def test_generate_invalid_version():
@@ -102,7 +102,7 @@ def test_generate_invalid_version():
         "prompt_version": "v99",
     })
     assert status == 422, f"Expected 422, got {status}"
-    print("PASS ✓")
+    print("PASS ")
 
 
 def test_evaluate_valid():
@@ -122,7 +122,7 @@ def test_evaluate_valid():
     })
     assert status == 200, f"Expected 200, got {status}: {body}"
     assert body.get("success")
-    print("PASS ✓")
+    print("PASS ")
     return body.get("entry", {}).get("id")
 
 
@@ -142,7 +142,7 @@ def test_evaluate_invalid_score():
         }
     })
     assert status == 422, f"Expected 422, got {status}"
-    print("PASS ✓")
+    print("PASS ")
 
 
 def test_get_evaluations():
@@ -150,7 +150,7 @@ def test_get_evaluations():
     status, body = get_json("/api/evaluate")
     assert status == 200, f"Expected 200, got {status}"
     assert "evaluations" in body
-    print("PASS ✓")
+    print("PASS ")
 
 
 def test_prompt_lab_prompts():
@@ -158,7 +158,7 @@ def test_prompt_lab_prompts():
     status, body = get_json("/api/prompt-lab/prompts")
     assert status == 200, f"Expected 200, got {status}"
     assert "v1" in body and "v2" in body and "v3" in body
-    print("PASS ✓")
+    print("PASS ")
 
 
 if __name__ == "__main__":
@@ -186,7 +186,7 @@ if __name__ == "__main__":
             test_fn()
             passed += 1
         except Exception as e:
-            print(f"FAIL ✗ — {e}")
+            print(f"FAIL  — {e}")
             failed += 1
 
     # Run the live generation test last (costs API tokens)
@@ -195,7 +195,7 @@ if __name__ == "__main__":
         test_generate_valid()
         passed += 1
     except Exception as e:
-        print(f"FAIL ✗ — {e}")
+        print(f"FAIL  — {e}")
         failed += 1
 
     print(f"\n{'='*55}")

@@ -11,38 +11,38 @@ PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_DIR"
 
 echo "=========================================================="
-echo "⚡ Starting StudyForge AI — Lecture Notes to Study Pack"
+echo " Starting StudyForge AI — Lecture Notes to Study Pack"
 echo "=========================================================="
 
 # 1. Check or activate virtual environment
 if [ -f "venv/bin/activate" ]; then
-    echo "📦 Activating virtual environment (venv)..."
+    echo " Activating virtual environment (venv)..."
     source venv/bin/activate
 elif [ -f "../venv/bin/activate" ]; then
-    echo "📦 Activating virtual environment (../venv)..."
+    echo " Activating virtual environment (../venv)..."
     source ../venv/bin/activate
 else
-    echo "⚙️ Creating virtual environment..."
+    echo " Creating virtual environment..."
     python3 -m venv venv
     source venv/bin/activate
-    echo "📥 Installing dependencies from backend/requirements.txt..."
+    echo " Installing dependencies from backend/requirements.txt..."
     pip install -r backend/requirements.txt
 fi
 
 # Ensure Flask is available in the environment; if not, reinstall dependencies
 if ! python -c "import flask" 2>/dev/null; then
-    echo "📥 Installing missing dependencies from backend/requirements.txt..."
+    echo " Installing missing dependencies from backend/requirements.txt..."
     pip install -r backend/requirements.txt
 fi
 
 # 2. Check for .env file
 if [ ! -f ".env" ]; then
     if [ -f ".env.example" ]; then
-        echo "⚠️ .env not found. Creating from .env.example..."
+        echo " .env not found. Creating from .env.example..."
         cp .env.example .env
-        echo "❗ Please make sure your GROQ_API_KEY is configured in .env"
+        echo " Please make sure your GROQ_API_KEY is configured in .env"
     else
-        echo "⚠️ Warning: No .env file found."
+        echo " Warning: No .env file found."
     fi
 fi
 
@@ -55,18 +55,18 @@ fi
 # Automatically free port if in use
 EXISTING_PID=$(lsof -ti :$PORT 2>/dev/null || true)
 if [ -n "$EXISTING_PID" ]; then
-    echo "🔄 Port $PORT is already in use by PID $EXISTING_PID. Freeing port..."
+    echo " Port $PORT is already in use by PID $EXISTING_PID. Freeing port..."
     kill -9 $EXISTING_PID 2>/dev/null || true
     sleep 0.5
 fi
 
-echo "🌐 Server target: http://localhost:$PORT"
+echo " Server target: http://localhost:$PORT"
 
 # 4. Automatically open browser on macOS after a short delay
 (
     sleep 1.5
     if command -v open >/dev/null 2>&1; then
-        echo "🚀 Opening browser at http://localhost:$PORT ..."
+        echo " Opening browser at http://localhost:$PORT ..."
         open "http://localhost:$PORT"
     elif command -v xdg-open >/dev/null 2>&1; then
         xdg-open "http://localhost:$PORT"

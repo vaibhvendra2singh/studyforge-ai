@@ -62,23 +62,24 @@ CONSTRAINTS:
 - Provide exactly 5 definitions in "Term: Definition" format.
 - Generate exactly {mcq_count} distinct Multiple Choice Questions (numbered Q1 to Q{mcq_count}).
 - Each MCQ must have exactly 4 choices (A, B, C, D) on separate lines.
-- Do NOT put ticks, checkmarks (✅), or answers on the option lines. Keep all 4 options completely neutral and clean.
+- Do NOT put ticks, checkmarks, or answers on the option lines. Keep all 4 options completely neutral and clean.
 - Place the correct answer and brief explanation strictly on the separate "Correct Answer:" line below each question.
 - Generate exactly {saq_count} short-answer questions with model answers (2–4 sentences each).
 - Ground all content in the provided lecture notes and topic. If the input is brief or presents a topic outline (e.g. 'explain photosynthesis in detail'), synthesize foundational academic curriculum facts to produce a complete, thorough study pack.
 - Ensure every single section below is fully populated with accurate, high-quality academic content.
+- Do NOT include any emojis anywhere in your output. Use clean, plain academic text only.
 
 OUTPUT FORMAT (use exactly these headers):
-## 📝 Summary
+## Summary
 [150–200 word summary here]
 
-## 🔑 Key Concepts
+## Key Concepts
 - **Concept Name**: One-sentence explanation
 
-## 📖 Definitions
+## Definitions
 - **Term**: Definition
 
-## ❓ Multiple Choice Questions
+## Multiple Choice Questions
 **Q1.** [Question text]
 A) [Option A]
 B) [Option B]
@@ -93,9 +94,9 @@ C) [Option C]
 D) [Option D]
 Correct Answer: [Letter] — [Brief explanation]
 
-## 💬 Short Answer Questions
+## Short Answer Questions
 **Q1.** [Question]
-📌 Model Answer: [2–4 sentence answer]
+Model Answer: [2–4 sentence answer]
 
 ---
 
@@ -139,28 +140,29 @@ Begin your response with this line:
 
 Then produce the study pack using these exact headers:
 
-## 📝 Summary
+## Summary
 [Concise 150–200 word summary capturing the core ideas]
 
-## 🔑 Key Concepts  
+## Key Concepts  
 [5–8 bullet points: **Term**: explanation tailored to {difficulty} level]
 
-## 📖 Definitions
+## Definitions
 [5 definitions relevant to the difficulty level]
 
-## ❓ Multiple Choice Questions
+## Multiple Choice Questions
 [{mcq_count} MCQs with 4 clean options A-D on separate lines, no ticks or answers on options, correct answer and explanation strictly on 'Correct Answer:' line below each question]
 
-## 💬 Short Answer Questions
+## Short Answer Questions
 [{saq_count} questions with model answers adjusted for {difficulty} level]
 
-## ⚠️ Responsible AI Notice
+## Responsible AI Notice
 [1–2 sentences noting that this content is AI-generated and should be verified against course materials]
 
 IMPORTANT INSTRUCTIONS:
 - Ground the study pack in the provided lecture notes. If the input is brief or presents a topic outline, draw upon foundational academic curriculum facts to produce a complete, thorough study pack.
 - Always generate all required sections (Summary, Key Concepts, Definitions, MCQs, Short Answers) with complete, detailed academic content.
 - Never leave sections blank or substitute placeholders.
+- Do NOT use any emojis anywhere in your output. Use clean, plain academic text only.
 
 LECTURE NOTES:
 {notes}
