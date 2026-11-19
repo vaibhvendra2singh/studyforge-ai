@@ -15,10 +15,10 @@ echo "⚡ Starting StudyForge AI — Lecture Notes to Study Pack"
 echo "=========================================================="
 
 # 1. Check or activate virtual environment
-if [ -d "venv" ]; then
+if [ -f "venv/bin/activate" ]; then
     echo "📦 Activating virtual environment (venv)..."
     source venv/bin/activate
-elif [ -d "../venv" ]; then
+elif [ -f "../venv/bin/activate" ]; then
     echo "📦 Activating virtual environment (../venv)..."
     source ../venv/bin/activate
 else
@@ -26,6 +26,12 @@ else
     python3 -m venv venv
     source venv/bin/activate
     echo "📥 Installing dependencies from backend/requirements.txt..."
+    pip install -r backend/requirements.txt
+fi
+
+# Ensure Flask is available in the environment; if not, reinstall dependencies
+if ! python -c "import flask" 2>/dev/null; then
+    echo "📥 Installing missing dependencies from backend/requirements.txt..."
     pip install -r backend/requirements.txt
 fi
 
@@ -69,4 +75,4 @@ echo "🌐 Server target: http://localhost:$PORT"
 
 # 5. Launch the Flask backend
 cd backend
-python3 app.py
+python app.py
