@@ -97,6 +97,13 @@ def get_evaluations():
     return jsonify({"evaluations": evals, "count": len(evals)})
 
 
+@evaluate_bp.route("/evaluate", methods=["DELETE"])
+def reset_all_evaluations():
+    """DELETE /api/evaluate — remove all evaluation records."""
+    save_evaluations([])
+    return jsonify({"success": True, "message": "All evaluations reset successfully."})
+
+
 @evaluate_bp.route("/evaluate/<eval_id>", methods=["DELETE"])
 def delete_evaluation(eval_id: str):
     """DELETE /api/evaluate/<id> — remove a single evaluation record."""

@@ -75,17 +75,10 @@
       <!-- Header in Simple English -->
       <div style="margin-bottom:2rem; text-align:center; display:flex; flex-direction:column; align-items:center;">
         <h1>AI Report Card</h1>
-        <p style="max-width:720px; margin: 0 auto; font-size:0.95rem; line-height:1.6;">
+        <p style="max-width:720px; margin: 0 auto 1.25rem auto; font-size:0.95rem; line-height:1.6;">
           See how well each AI prompt performed. Grade your study packs to see real star ratings and find out which prompt gives the best results.
         </p>
-      </div>
-
-      <!-- Quick Explanation Banner -->
-      <div class="paper-card card-cream" style="margin-bottom:2rem; padding:1.25rem 1.5rem; display:flex; align-items:center; gap:1.25rem; border-left:4px solid var(--ink);">
-        <span style="font-size:1.8rem;"></span>
-        <div style="font-size:0.86rem; line-height:1.6;">
-          <strong>How this page works:</strong> Whenever you generate a study pack in <strong>Preparation</strong>, click the <strong>"Score this Pack"</strong> button and rate it with 1 to 5 stars. Your scores automatically update here to show which prompt version works best!
-        </div>
+        <button class="btn btn-secondary btn-sm" onclick="resetAllEvaluations()">Reset All Evaluations</button>
       </div>
 
       <!-- Top 4 Overall Statistics Cards -->
@@ -235,7 +228,7 @@
   </div>
 </div>
 
-<script src="/static/js/main.js?v=2.2"></script>
+<script src="/static/js/main.js?v=6.0"></script>
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
@@ -381,6 +374,16 @@
 
     } catch (err) {
       console.error(err);
+    }
+  }
+
+  async function resetAllEvaluations() {
+    if (!confirm("Are you sure you want to reset all evaluation scores to zero?")) return;
+    try {
+      await fetch('/api/evaluate', { method: 'DELETE' });
+      fetchLiveEvaluations();
+    } catch (err) {
+      alert("Could not reset evaluations.");
     }
   }
 

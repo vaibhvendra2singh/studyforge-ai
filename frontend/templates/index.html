@@ -518,7 +518,10 @@
         <h1>Saved Study Packs</h1>
         <p style="max-width:600px; margin: 0 auto;">Open your saved study packs, practice quizzes, and notes.</p>
       </div>
-      <button class="btn btn-primary" onclick="switchView('generator')">+ Make Study Pack</button>
+      <div style="display:flex; gap:0.75rem; flex-wrap:wrap; justify-content:center;">
+        <button class="btn btn-primary" onclick="switchView('generator')">+ Make Study Pack</button>
+        <button class="btn btn-secondary" onclick="clearAllPacksAndEvaluations()">Reset All Packs &amp; Scores</button>
+      </div>
     </div>
 
     <div style="display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap; align-items:center;">
@@ -723,7 +726,7 @@
 </div>
 
 <div class="toast-msg" id="toast-notification"> Done</div>
-<script src="/static/js/main.js?v=5.0"></script>
+<script src="/static/js/main.js?v=6.0"></script>
 
 </body>
 </html>

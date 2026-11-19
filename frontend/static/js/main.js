@@ -1295,15 +1295,41 @@ function duplicatePackToEditor(id) {
   showNotificationToast("Copied into notes box.");
 }
 
-function deleteSavedPack(id) {
+async function deleteSavedPack(id) {
   if (!confirm("Delete this study pack?")) return;
   appState.libraryPacks = appState.libraryPacks.filter(p => p.id !== id);
   localStorage.setItem('studyforge_library_packs', JSON.stringify(appState.libraryPacks));
+
+  // If no packs remain, also reset evaluations so the report card resets to zero
+  if (appState.libraryPacks.length === 0) {
+    try {
+      await fetch('/api/evaluate', { method: 'DELETE' });
+    } catch (e) {
+      console.error("Error resetting evaluations:", e);
+    }
+  }
+
   renderLibrary();
   renderDashboardRecentPacks();
   renderSubjectFilters();
   updateDashboardMetrics();
   showNotificationToast("Study pack deleted.");
+}
+
+async function clearAllPacksAndEvaluations() {
+  if (!confirm("Delete all study packs and reset all evaluation scores?")) return;
+  appState.libraryPacks = [];
+  localStorage.removeItem('studyforge_library_packs');
+  try {
+    await fetch('/api/evaluate', { method: 'DELETE' });
+  } catch (e) {
+    console.error("Error resetting evaluations:", e);
+  }
+  renderLibrary();
+  renderDashboardRecentPacks();
+  renderSubjectFilters();
+  updateDashboardMetrics();
+  showNotificationToast("All study packs and evaluations have been reset.");
 }
 
 // ── REAL DASHBOARD METRICS CALCULATION ─────────────────────────────────────
