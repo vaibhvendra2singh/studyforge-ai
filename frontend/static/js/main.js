@@ -354,7 +354,14 @@ async function executeStudyPackGeneration() {
         })
       });
 
-      if (!response.ok) throw new Error("Stream request failed");
+      if (!response.ok) {
+        let errMessage = "Generation request failed";
+        try {
+          const errData = await response.json();
+          if (errData.error) errMessage = errData.error;
+        } catch (e) {}
+        throw new Error(errMessage);
+      }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");

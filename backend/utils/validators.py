@@ -6,7 +6,7 @@ import re
 
 
 MAX_NOTES_LENGTH = 15000  # characters — roughly ~10 pages of text
-MIN_NOTES_LENGTH = 50
+MIN_NOTES_LENGTH = 10
 ALLOWED_DIFFICULTIES = {"Beginner", "Intermediate", "Advanced"}
 
 
