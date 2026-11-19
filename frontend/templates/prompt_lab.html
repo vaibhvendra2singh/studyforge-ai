@@ -71,43 +71,58 @@
 </nav>
 
 <div class="app-container anim-slide-down">
-
+  <div style="max-width: 1240px; margin: 0 auto;">
       
       <!-- Header -->
       <div style="margin-bottom:2.25rem; text-align:center; display:flex; flex-direction:column; align-items:center;">
         <h1>Compare Prompts</h1>
         <p style="max-width:700px; margin: 0 auto;">
-          Run the same lecture notes through three different prompts to see which one gives the best study pack.
+          Run your lecture notes through individual prompts or benchmark all three side by side to compare outputs.
         </p>
       </div>
 
-      <!-- 3 Prompt Cards in Simple English -->
+      <!-- 3 Prompt Cards with Individual Run Buttons -->
       <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:1.25rem; margin-bottom:2rem;">
-        <div class="paper-card card-cream">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-            <span class="stamp">VERSION 1</span>
-            <span class="font-mono" style="font-size:0.72rem;">BASIC</span>
+        <div class="paper-card card-cream" style="display:flex; flex-direction:column; justify-content:space-between;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+              <span class="stamp">VERSION 1</span>
+              <span class="font-mono" style="font-size:0.72rem;">BASIC</span>
+            </div>
+            <h3 style="margin-bottom:0.35rem;">Basic</h3>
+            <p style="font-size:0.82rem; margin:0 0 1rem 0; line-height:1.6;">A simple instruction. See what the AI does without strict rules or structure.</p>
           </div>
-          <h3 style="margin-bottom:0.35rem;">Basic</h3>
-          <p style="font-size:0.82rem; margin:0; line-height:1.6;">A simple instruction. See what the AI does without strict rules.</p>
+          <button class="btn btn-secondary btn-sm" id="btn-card-v1" style="width:100%; font-weight:600;" onclick="runSinglePrompt('v1')">
+            ⚡ Run V1 Basic Only
+          </button>
         </div>
 
-        <div class="paper-card card-cream">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-            <span class="stamp">VERSION 2</span>
-            <span class="font-mono" style="font-size:0.72rem;">STRICT</span>
+        <div class="paper-card card-cream" style="display:flex; flex-direction:column; justify-content:space-between;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+              <span class="stamp">VERSION 2</span>
+              <span class="font-mono" style="font-size:0.72rem;">STRICT</span>
+            </div>
+            <h3 style="margin-bottom:0.35rem;">Strict Rules</h3>
+            <p style="font-size:0.82rem; margin:0 0 1rem 0; line-height:1.6;">The AI must follow a strict format and exactly match your target difficulty and questions.</p>
           </div>
-          <h3 style="margin-bottom:0.35rem;">Strict Rules</h3>
-          <p style="font-size:0.82rem; margin:0; line-height:1.6;">The AI must follow a strict format and exactly match your settings.</p>
+          <button class="btn btn-secondary btn-sm" id="btn-card-v2" style="width:100%; font-weight:600;" onclick="runSinglePrompt('v2')">
+            ⚡ Run V2 Strict Only
+          </button>
         </div>
 
-        <div class="paper-card card-cream">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-            <span class="stamp">VERSION 3</span>
-            <span class="font-mono" style="font-size:0.72rem;">SMART</span>
+        <div class="paper-card card-cream" style="display:flex; flex-direction:column; justify-content:space-between;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+              <span class="stamp">VERSION 3</span>
+              <span class="font-mono" style="font-size:0.72rem;">SMART</span>
+            </div>
+            <h3 style="margin-bottom:0.35rem;">Smart Thinking</h3>
+            <p style="font-size:0.82rem; margin:0 0 1rem 0; line-height:1.6;">The AI takes its time to plan and think step-by-step before synthesizing the best study pack.</p>
           </div>
-          <h3 style="margin-bottom:0.35rem;">Smart Thinking</h3>
-          <p style="font-size:0.82rem; margin:0; line-height:1.6;">The AI takes its time to plan and think before writing the best study pack.</p>
+          <button class="btn btn-secondary btn-sm" id="btn-card-v3" style="width:100%; font-weight:600;" onclick="runSinglePrompt('v3')">
+            ⚡ Run V3 Smart Only
+          </button>
         </div>
       </div>
 
@@ -120,9 +135,9 @@
           </div>
         </div>
 
-        <div style="display:grid; grid-template-columns: 1fr 220px; gap:1.5rem; align-items:start;">
+        <div style="display:grid; grid-template-columns: 1fr 240px; gap:1.5rem; align-items:start;">
           <div>
-            <textarea id="lab-notes-input" class="form-control" style="min-height:140px;" placeholder="Paste your notes here..."></textarea>
+            <textarea id="lab-notes-input" class="form-control" style="min-height:160px;" placeholder="Paste your notes here..."></textarea>
             <div class="char-counter" id="lab-char-counter">0 / 15,000 characters</div>
           </div>
 
@@ -136,9 +151,18 @@
               </div>
             </div>
 
-            <button class="btn btn-primary btn-lg" id="btn-run-lab" style="width:100%;" onclick="runPromptComparison()">
-              <span>🔬 RUN ALL 3 PROMPTS</span>
-            </button>
+            <div>
+              <label class="form-label">Run Individual</label>
+              <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:0.35rem; margin-bottom:0.6rem;">
+                <button class="btn btn-secondary btn-sm" id="btn-run-v1" onclick="runSinglePrompt('v1')" title="Run Version 1 Basic">V1 Only</button>
+                <button class="btn btn-secondary btn-sm" id="btn-run-v2" onclick="runSinglePrompt('v2')" title="Run Version 2 Strict">V2 Only</button>
+                <button class="btn btn-secondary btn-sm" id="btn-run-v3" onclick="runSinglePrompt('v3')" title="Run Version 3 Smart">V3 Only</button>
+              </div>
+
+              <button class="btn btn-primary btn-lg" id="btn-run-lab" style="width:100%;" onclick="runPromptComparison()">
+                <span>🔬 RUN ALL 3 PROMPTS</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -150,14 +174,14 @@
       <!-- Loading Indicator -->
       <div id="lab-loading-indicator" class="paper-card card-white" style="display:none; text-align:center; padding:3.5rem 2rem; margin-bottom:2rem;">
         <div style="display:inline-block; width:44px; height:44px; border:3px solid var(--rule); border-top-color:var(--ink); border-radius:50%; animation:spin 0.8s linear infinite; margin-bottom:1.25rem;"></div>
-        <h3 id="lab-loading-text">Running V1, V2, and V3 prompts...</h3>
-        <p style="font-size:0.82rem; margin:0;">Testing all three prompts on your notes. This takes a few seconds.</p>
+        <h3 id="lab-loading-text">Running prompts with Groq AI...</h3>
+        <p style="font-size:0.82rem; margin:0;" id="lab-loading-subtext">Testing your notes. This takes just a few seconds.</p>
       </div>
 
       <!-- 3-Column Side-by-Side Comparison Output Grid -->
       <div id="lab-results-grid" style="display:none; margin-bottom:2.5rem;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
-          <h3>Results</h3>
+          <h3 id="lab-results-heading">Benchmark Results</h3>
           <span class="stamp stamp-dark" id="lab-timestamp">Done</span>
         </div>
 
@@ -167,13 +191,16 @@
           <div class="lab-output-card">
             <div class="lab-card-header">
               <span class="stamp">V1 BASIC</span>
-              <span class="font-mono" id="v1-token-badge" style="font-size:0.74rem;">— tokens</span>
+              <span class="font-mono" id="v1-token-badge" style="font-size:0.74rem;">Ready</span>
             </div>
             <div class="lab-output-body" id="lab-out-v1">
-              <!-- Rendered markdown -->
+              <div style="text-align:center; padding:3rem 1rem; color:var(--muted); font-size:0.85rem;">
+                <p style="margin-bottom:0.75rem;">Not run yet.</p>
+                <button class="btn btn-secondary btn-sm" onclick="runSinglePrompt('v1')">⚡ Run V1 Basic</button>
+              </div>
             </div>
             <div style="padding:0.75rem 1.25rem; background:var(--paper); border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-size:0.75rem; color:var(--muted);">Simple prompt</span>
+              <button class="btn btn-ghost btn-sm" onclick="runSinglePrompt('v1')">↻ Re-run V1</button>
               <button class="btn btn-ghost btn-sm" onclick="rateLabOutput('v1')">Score V1 ★</button>
             </div>
           </div>
@@ -182,13 +209,16 @@
           <div class="lab-output-card">
             <div class="lab-card-header">
               <span class="stamp stamp-dark">V2 STRUCTURED</span>
-              <span class="font-mono" id="v2-token-badge" style="font-size:0.74rem;">— tokens</span>
+              <span class="font-mono" id="v2-token-badge" style="font-size:0.74rem;">Ready</span>
             </div>
             <div class="lab-output-body" id="lab-out-v2">
-              <!-- Rendered markdown -->
+              <div style="text-align:center; padding:3rem 1rem; color:var(--muted); font-size:0.85rem;">
+                <p style="margin-bottom:0.75rem;">Not run yet.</p>
+                <button class="btn btn-secondary btn-sm" onclick="runSinglePrompt('v2')">⚡ Run V2 Strict</button>
+              </div>
             </div>
             <div style="padding:0.75rem 1.25rem; background:var(--paper); border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-size:0.75rem; color:var(--muted);">Fixed format</span>
+              <button class="btn btn-ghost btn-sm" onclick="runSinglePrompt('v2')">↻ Re-run V2</button>
               <button class="btn btn-ghost btn-sm" onclick="rateLabOutput('v2')">Score V2 ★</button>
             </div>
           </div>
@@ -197,13 +227,16 @@
           <div class="lab-output-card">
             <div class="lab-card-header">
               <span class="stamp">V3 STEP-BY-STEP</span>
-              <span class="font-mono" id="v3-token-badge" style="font-size:0.74rem;">— tokens</span>
+              <span class="font-mono" id="v3-token-badge" style="font-size:0.74rem;">Ready</span>
             </div>
             <div class="lab-output-body" id="lab-out-v3">
-              <!-- Rendered markdown -->
+              <div style="text-align:center; padding:3rem 1rem; color:var(--muted); font-size:0.85rem;">
+                <p style="margin-bottom:0.75rem;">Not run yet.</p>
+                <button class="btn btn-secondary btn-sm" onclick="runSinglePrompt('v3')">⚡ Run V3 Smart</button>
+              </div>
             </div>
             <div style="padding:0.75rem 1.25rem; background:var(--paper); border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-size:0.75rem; color:var(--muted);">Step-by-step review</span>
+              <button class="btn btn-ghost btn-sm" onclick="runSinglePrompt('v3')">↻ Re-run V3</button>
               <button class="btn btn-ghost btn-sm" onclick="rateLabOutput('v3')">Score V3 ★</button>
             </div>
           </div>
@@ -230,7 +263,7 @@
           <pre id="raw-template-code" style="background:var(--white); padding:1.25rem; border:1px solid var(--line); border-radius:12px; font-size:0.8rem; overflow-x:auto; white-space:pre-wrap; line-height:1.6;"></pre>
         </div>
       </div>
-
+  </div>
 </div>
 
 <!-- Modal & Toast -->
@@ -241,28 +274,141 @@
   let labDifficulty = 'Intermediate';
   let labTemplates = {};
 
+  // Character counter
+  const notesInput = document.getElementById('lab-notes-input');
+  const charCounter = document.getElementById('lab-char-counter');
+  if (notesInput && charCounter) {
+    notesInput.addEventListener('input', () => {
+      const len = notesInput.value.length;
+      charCounter.textContent = `${len.toLocaleString()} / 15,000 characters`;
+      charCounter.style.color = len > 15000 ? '#e53e3e' : '';
+    });
+  }
+
   function setLabDifficulty(diff) {
     labDifficulty = diff;
     document.querySelectorAll('[id^="ldiff-"]').forEach(b => b.classList.remove('active'));
     document.getElementById(`ldiff-${diff.toLowerCase()}`).classList.add('active');
   }
 
+  function setButtonsDisabled(disabled) {
+    const selector = '[id^="btn-run-"], [id^="btn-card-"], #btn-run-lab';
+    document.querySelectorAll(selector).forEach(b => b.disabled = disabled);
+  }
+
+  const VERSION_INFO = {
+    v1: { name: 'V1 Basic', badge: 'V1 BASIC' },
+    v2: { name: 'V2 Strict Rules', badge: 'V2 STRUCTURED' },
+    v3: { name: 'V3 Smart Thinking', badge: 'V3 STEP-BY-STEP' }
+  };
+
+  async function runSinglePrompt(ver) {
+    const notes = document.getElementById('lab-notes-input').value.trim();
+    if (!notes) {
+      alert("Please paste your notes first.");
+      document.getElementById('lab-notes-input').focus();
+      return;
+    }
+
+    const results = document.getElementById('lab-results-grid');
+    const errAlert = document.getElementById('lab-error-alert');
+    const outCol = document.getElementById(`lab-out-${ver}`);
+    const tokenBadge = document.getElementById(`${ver}-token-badge`);
+
+    results.style.display = 'block';
+    errAlert.style.display = 'none';
+
+    // Show spinner inside this specific column
+    if (tokenBadge) tokenBadge.textContent = 'Generating...';
+    if (outCol) {
+      outCol.innerHTML = `
+        <div style="text-align:center; padding:3.5rem 1rem;">
+          <div style="display:inline-block; width:34px; height:34px; border:3px solid var(--rule); border-top-color:var(--ink); border-radius:50%; animation:spin 0.8s linear infinite; margin-bottom:1rem;"></div>
+          <div style="font-size:0.9rem; font-weight:600;">Generating ${VERSION_INFO[ver]?.name || ver}...</div>
+          <div style="font-size:0.78rem; color:var(--muted); margin-top:0.35rem;">Running with Groq AI</div>
+        </div>
+      `;
+    }
+
+    setButtonsDisabled(true);
+
+    try {
+      const resp = await fetch('/api/prompt-lab/compare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          notes: notes,
+          difficulty: labDifficulty,
+          versions: [ver]
+        })
+      });
+
+      const data = await resp.json();
+      if (!resp.ok || !data.success) {
+        throw new Error(data.error || `Could not run ${VERSION_INFO[ver]?.name}`);
+      }
+
+      const res = data.results && data.results[ver];
+      if (!res) throw new Error(`No output received for ${ver}`);
+
+      if (outCol) {
+        outCol.innerHTML = marked.parse(res.content || res.error || 'No content generated.');
+      }
+      if (tokenBadge) {
+        tokenBadge.textContent = res.usage?.total_tokens ? `${res.usage.total_tokens} tokens` : 'Done';
+      }
+
+      document.getElementById('lab-timestamp').textContent = `Updated ${new Date().toLocaleTimeString()}`;
+
+    } catch (err) {
+      if (outCol) {
+        outCol.innerHTML = `
+          <div style="padding:1.5rem; color:#b91c1c; font-size:0.85rem;">
+            <strong>Error running ${ver}:</strong> ${err.message}
+          </div>
+        `;
+      }
+      if (tokenBadge) tokenBadge.textContent = 'Failed';
+      errAlert.style.display = 'block';
+      document.getElementById('lab-error-text').textContent = err.message;
+    } finally {
+      setButtonsDisabled(false);
+    }
+  }
+
   async function runPromptComparison() {
     const notes = document.getElementById('lab-notes-input').value.trim();
     if (!notes) {
       alert("Please paste your notes first.");
+      document.getElementById('lab-notes-input').focus();
       return;
     }
 
-    const btn = document.getElementById('btn-run-lab');
     const loading = document.getElementById('lab-loading-indicator');
     const results = document.getElementById('lab-results-grid');
     const errAlert = document.getElementById('lab-error-alert');
 
-    btn.disabled = true;
+    // Show loading on all 3 columns
+    results.style.display = 'block';
     loading.style.display = 'block';
-    results.style.display = 'none';
     errAlert.style.display = 'none';
+
+    ['v1', 'v2', 'v3'].forEach(v => {
+      const b = document.getElementById(`${v}-token-badge`);
+      if (b) b.textContent = 'Generating...';
+      const out = document.getElementById(`lab-out-${v}`);
+      if (out) {
+        out.innerHTML = `
+          <div style="text-align:center; padding:3.5rem 1rem;">
+            <div style="display:inline-block; width:34px; height:34px; border:3px solid var(--rule); border-top-color:var(--ink); border-radius:50%; animation:spin 0.8s linear infinite; margin-bottom:1rem;"></div>
+            <div style="font-size:0.9rem; font-weight:600;">Generating ${VERSION_INFO[v]?.name}...</div>
+            <div style="font-size:0.78rem; color:var(--muted); margin-top:0.35rem;">Benchmarking on Groq</div>
+          </div>
+        `;
+      }
+    });
+
+    setButtonsDisabled(true);
 
     try {
       const resp = await fetch('/api/prompt-lab/compare', {
@@ -280,27 +426,25 @@
         throw new Error(data.error || 'Could not compare prompts');
       }
 
-      // Populate results
-      const resV1 = data.results.v1;
-      const resV2 = data.results.v2;
-      const resV3 = data.results.v3;
-
-      document.getElementById('lab-out-v1').innerHTML = marked.parse(resV1.content || resV1.error || 'No content');
-      document.getElementById('lab-out-v2').innerHTML = marked.parse(resV2.content || resV2.error || 'No content');
-      document.getElementById('lab-out-v3').innerHTML = marked.parse(resV3.content || resV3.error || 'No content');
-
-      document.getElementById('v1-token-badge').textContent = resV1.usage?.total_tokens ? `${resV1.usage.total_tokens} tokens` : 'Done';
-      document.getElementById('v2-token-badge').textContent = resV2.usage?.total_tokens ? `${resV2.usage.total_tokens} tokens` : 'Done';
-      document.getElementById('v3-token-badge').textContent = resV3.usage?.total_tokens ? `${resV3.usage.total_tokens} tokens` : 'Done';
+      ['v1', 'v2', 'v3'].forEach(v => {
+        const res = data.results && data.results[v];
+        const out = document.getElementById(`lab-out-${v}`);
+        const badge = document.getElementById(`${v}-token-badge`);
+        if (res && out) {
+          out.innerHTML = marked.parse(res.content || res.error || 'No content');
+        }
+        if (res && badge) {
+          badge.textContent = res.usage?.total_tokens ? `${res.usage.total_tokens} tokens` : 'Done';
+        }
+      });
 
       document.getElementById('lab-timestamp').textContent = `Done at ${new Date().toLocaleTimeString()}`;
-      results.style.display = 'block';
 
     } catch (err) {
       errAlert.style.display = 'block';
       document.getElementById('lab-error-text').textContent = err.message;
     } finally {
-      btn.disabled = false;
+      setButtonsDisabled(false);
       loading.style.display = 'none';
     }
   }
