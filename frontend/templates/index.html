@@ -7,6 +7,7 @@
   <meta name="description" content="Transform lecture notes into structured, exam-ready study packs using Groq's high-speed inference engine." />
   <link rel="stylesheet" href="/static/css/main.css?v=2.6" />
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
 
@@ -420,7 +421,7 @@
         <span class="stamp" id="res-badge-diff">INTERMEDIATE</span>
         
         <button class="btn btn-secondary btn-sm" onclick="copyCurrentOutput()">Copy Text</button>
-        <button class="btn btn-secondary btn-sm" onclick="downloadCurrentOutput()">Download File</button>
+        <button class="btn btn-secondary btn-sm" onclick="downloadCurrentPdf()">Download PDF</button>
         <button class="btn btn-primary btn-sm" onclick="openEvaluationModal()">Score this Pack</button>
       </div>
     </div>
@@ -695,7 +696,7 @@
 </div>
 
 <div class="toast-msg" id="toast-notification"> Done</div>
-<script src="/static/js/main.js?v=2.9"></script>
+<script src="/static/js/main.js?v=3.0"></script>
 
 </body>
 </html>

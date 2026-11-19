@@ -651,7 +651,7 @@ function parseStudyPackContent(text) {
     for (const line of lines) {
       const qStartMatch = line.match(/^(?:(?:\*{1,2}|#{1,4}\s*)?(?:Q(?:uestion)?\s*\d+|\d+)[\.:\)]\*{0,2})\s*(.*)/i);
       const isOption = /^[A-D][\).:\s-]/i.test(line);
-      const isCorrect = /(?:Correct Answer|Model Answer|Answer Key|Key||Answer\s*:)/i.test(line);
+      const isCorrect = /(?:Correct Answer|Answer Key|\bKey\b|Answer\s*:)/i.test(line);
 
       if (qStartMatch && !isOption && !isCorrect) {
         if (currentMcq && currentMcq.options.length >= 2) {
@@ -666,12 +666,11 @@ function parseStudyPackContent(text) {
           explanation: ''
         };
       } else if (isOption && currentMcq) {
-        // Strip any checkmarks, ticks, or letters from option text
-        const cleanOpt = line.replace(/[]/g, '').trim();
+        const cleanOpt = line.replace(/^[A-D][\).:\s-]+/i, '').replace(/[✅✔✓]/g, '').trim();
         currentMcq.options.push(cleanOpt);
       } else if (isCorrect && currentMcq) {
-        let cleanAns = line.replace(/.*(?:Correct Answer|Answer Key|Key||Answer)[:\s]*/i, '').trim();
-        cleanAns = cleanAns.replace(/[]/g, '').trim();
+        let cleanAns = line.replace(/.*(?:Correct Answer|Answer Key|\bKey\b|Answer)[:\s*]*/i, '').trim();
+        cleanAns = cleanAns.replace(/^\*+|\*+$/g, '').trim();
         if (cleanAns.includes('—') || cleanAns.includes('-')) {
           const parts = cleanAns.split(/[—\-]/);
           currentMcq.correct = parts[0].trim();
@@ -699,7 +698,7 @@ function parseStudyPackContent(text) {
 
     for (const line of lines) {
       const qStartMatch = line.match(/^(?:(?:\*{1,2}|#{1,4}\s*)?(?:Q(?:uestion)?\s*\d+|\d+)[\.:\)]\*{0,2})\s*(.*)/i);
-      const isAnswer = /(?:Model Answer|Answer)[:\s]*/i.test(line);
+      const isAnswer = /(?:Model Answer|Answer\s*:|\*Model Answer:\*)/i.test(line);
 
       if (qStartMatch && !isAnswer) {
         if (currentSaq && currentSaq.answer) {
@@ -711,13 +710,13 @@ function parseStudyPackContent(text) {
           answer: ''
         };
       } else if (isAnswer && currentSaq) {
-        const cleanAns = line.replace(/.*(?:Model Answer|Answer|)[:\s]*/i, '').trim();
-        currentSaq.answer = cleanAns;
+        const cleanAns = line.replace(/.*(?:Model Answer|Answer\s*:|\*Model Answer:\*)[:\s*]*/i, '').trim();
+        currentSaq.answer = cleanAns.replace(/^\*+|\*+$/g, '').trim();
       } else if (currentSaq) {
         if (currentSaq.answer) {
-          currentSaq.answer += ' ' + line;
+          currentSaq.answer += ' ' + line.trim();
         } else {
-          currentSaq.question += ' ' + line;
+          currentSaq.question += ' ' + line.trim();
         }
       }
     }
@@ -809,15 +808,172 @@ function copyCurrentOutput() {
 }
 
 function downloadCurrentOutput() {
-  if (!appState.lastResult?.content) return;
-  const blob = new Blob([appState.lastResult.content], { type: 'text/markdown' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `StudyForge-${appState.difficulty}-${Date.now()}.md`;
-  a.click();
-  URL.revokeObjectURL(url);
-  showNotificationToast("Markdown downloaded!");
+  downloadCurrentPdf();
+}
+
+function downloadCurrentPdf() {
+  if (!appState.lastResult?.content) {
+    showNotificationToast("No study pack available to download.");
+    return;
+  }
+  generateStudyPackPdf(appState.lastResult);
+}
+
+function downloadPackPdfById(id) {
+  const pack = appState.libraryPacks.find(p => p.id === id);
+  if (!pack || !pack.content) {
+    showNotificationToast("Study pack not found.");
+    return;
+  }
+  generateStudyPackPdf(pack);
+}
+
+function generateStudyPackPdf(packData) {
+  if (!packData || !packData.content) {
+    showNotificationToast("No content available to export.");
+    return;
+  }
+  const content = stripEmojis(packData.content || '');
+  const parsed = parseStudyPackContent(content);
+  const subject = packData.subject || packData.title || 'Lecture Study Pack';
+  const difficulty = (packData.difficulty || 'Intermediate').toUpperCase();
+  const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+
+  showNotificationToast("Generating PDF...");
+
+  const wrapper = document.createElement('div');
+  wrapper.style.position = 'fixed';
+  wrapper.style.left = '-9999px';
+  wrapper.style.top = '0';
+  wrapper.style.width = '750px';
+  wrapper.style.background = '#ffffff';
+  wrapper.style.color = '#111111';
+  wrapper.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif';
+  wrapper.style.padding = '36px 42px';
+  wrapper.style.lineHeight = '1.6';
+  wrapper.style.fontSize = '13px';
+
+  let html = `
+    <div style="border-bottom: 2px solid #111; padding-bottom: 14px; margin-bottom: 22px; display: flex; justify-content: space-between; align-items: flex-end;">
+      <div>
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #555; margin-bottom: 4px;">STUDYFORGE AI - STUDY PACK</div>
+        <h1 style="margin: 0; font-size: 22px; font-weight: 800; color: #000; line-height: 1.2;">${escapeHtml(subject)}</h1>
+      </div>
+      <div style="text-align: right;">
+        <span style="display: inline-block; padding: 4px 10px; background: #111; color: #fff; font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 1px;">${difficulty}</span>
+        <div style="font-size: 11px; color: #666; margin-top: 4px;">${dateStr}</div>
+      </div>
+    </div>
+  `;
+
+  if (parsed.summary) {
+    html += `
+      <div style="margin-bottom: 22px; page-break-inside: avoid;">
+        <h2 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #000; border-bottom: 1px solid #e0e0e0; padding-bottom: 4px; margin-bottom: 8px;">Summary</h2>
+        <div style="background: #f9f9f9; border-left: 3px solid #111; padding: 10px 14px; font-size: 12.5px; line-height: 1.7; color: #222;">
+          ${marked.parse(parsed.summary)}
+        </div>
+      </div>
+    `;
+  }
+
+  if (parsed.concepts && parsed.concepts.length > 0) {
+    html += `
+      <div style="margin-bottom: 22px; page-break-inside: avoid;">
+        <h2 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #000; border-bottom: 1px solid #e0e0e0; padding-bottom: 4px; margin-bottom: 8px;">Key Concepts</h2>
+        <ul style="margin: 0; padding-left: 20px; line-height: 1.75;">
+          ${parsed.concepts.map(c => `<li style="margin-bottom: 5px;">${marked.parseInline(c.replace(/^[-*]\s*/, ''))}</li>`).join('')}
+        </ul>
+      </div>
+    `;
+  }
+
+  if (parsed.definitions && parsed.definitions.length > 0) {
+    html += `
+      <div style="margin-bottom: 22px; page-break-inside: avoid;">
+        <h2 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #000; border-bottom: 1px solid #e0e0e0; padding-bottom: 4px; margin-bottom: 8px;">Definitions</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          ${parsed.definitions.map(d => `
+            <div style="background: #fafafa; border: 1px solid #e8e8e8; border-radius: 4px; padding: 8px 10px; font-size: 12px; line-height: 1.5;">
+              ${marked.parseInline(d.replace(/^[-*]|\d+\.\s*/, ''))}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  if (parsed.mcqs && parsed.mcqs.length > 0) {
+    html += `
+      <div style="margin-bottom: 22px;">
+        <h2 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #000; border-bottom: 1px solid #e0e0e0; padding-bottom: 4px; margin-bottom: 10px;">Practice Quiz</h2>
+        ${parsed.mcqs.map((mcq, idx) => `
+          <div style="margin-bottom: 12px; padding: 10px 12px; border: 1px solid #e2e2e2; border-radius: 5px; background: #ffffff; page-break-inside: avoid;">
+            <div style="font-weight: 700; font-size: 12.5px; margin-bottom: 6px;">Q${idx + 1}. ${escapeHtml(mcq.question)}</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 8px;">
+              ${mcq.options.map((opt, i) => {
+                const letter = String.fromCharCode(65 + i);
+                const clean = opt.replace(/^[A-D][\).:\s-]+/i, '').replace(/[✅✔✓]/g, '').trim();
+                return `<div style="padding: 5px 8px; background: #f4f4f4; border-radius: 4px; font-size: 11.5px;"><strong>${letter})</strong> ${escapeHtml(clean)}</div>`;
+              }).join('')}
+            </div>
+            <div style="font-size: 11px; color: #444; background: #fafafa; border-top: 1px dashed #ddd; padding: 5px 8px; margin-top: 4px;">
+              <strong>Answer:</strong> ${escapeHtml(mcq.correct)} ${mcq.explanation ? `&mdash; ${escapeHtml(mcq.explanation)}` : ''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  if (parsed.saqs && parsed.saqs.length > 0) {
+    html += `
+      <div style="margin-bottom: 22px;">
+        <h2 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #000; border-bottom: 1px solid #e0e0e0; padding-bottom: 4px; margin-bottom: 10px;">Short Answer Questions</h2>
+        ${parsed.saqs.map((saq, idx) => `
+          <div style="margin-bottom: 12px; padding: 10px 12px; border: 1px solid #e2e2e2; border-radius: 5px; background: #ffffff; page-break-inside: avoid;">
+            <div style="font-weight: 700; font-size: 12.5px; margin-bottom: 5px;">Q${idx + 1}. ${escapeHtml(saq.question)}</div>
+            <div style="font-size: 11.5px; color: #222; background: #f8f8f8; border-left: 2px solid #333; padding: 7px 10px; line-height: 1.6;">
+              <strong>Model Answer:</strong> ${escapeHtml(saq.answer)}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  html += `
+    <div style="border-top: 1px solid #e0e0e0; padding-top: 10px; margin-top: 24px; font-size: 10px; color: #777; text-align: center;">
+      Generated by StudyForge AI - Comprehensive Academic Study Pack
+    </div>
+  `;
+
+  wrapper.innerHTML = html;
+  document.body.appendChild(wrapper);
+
+  const cleanTitle = (subject || 'StudyPack').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const filename = `StudyForge_${cleanTitle}_${difficulty}.pdf`;
+
+  if (window.html2pdf) {
+    const opt = {
+      margin:       [10, 10, 10, 10],
+      filename:     filename,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(wrapper).save().then(() => {
+      document.body.removeChild(wrapper);
+      showNotificationToast("PDF downloaded successfully!");
+    }).catch(err => {
+      console.error("PDF export error", err);
+      document.body.removeChild(wrapper);
+      window.print();
+    });
+  } else {
+    document.body.removeChild(wrapper);
+    window.print();
+  }
 }
 
 // ── MY STUDY PACKS (SAVED PACKS) ──────────────────────────────────────────
@@ -953,8 +1109,8 @@ function renderLibrary() {
 
       <div style="display:flex; gap:0.5rem; border-top:1px solid var(--line); padding-top:0.85rem;">
         <button class="btn btn-primary btn-sm" style="flex:1;" onclick="loadSavedPack('${pack.id}')">Open Study Pack</button>
-        <button class="btn btn-ghost btn-sm" onclick="duplicatePackToEditor('${pack.id}')">Copy to Editor</button>
-        <button class="btn btn-ghost btn-sm" onclick="deleteSavedPack('${pack.id}')">x</button>
+        <button class="btn btn-secondary btn-sm" onclick="downloadPackPdfById('${pack.id}')">Download PDF</button>
+        <button class="btn btn-ghost btn-sm" onclick="deleteSavedPack('${pack.id}')" title="Delete">x</button>
       </div>
     </div>
   `).join('');

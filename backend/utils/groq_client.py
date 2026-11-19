@@ -150,10 +150,26 @@ Then produce the study pack using these exact headers:
 [5 definitions relevant to the difficulty level]
 
 ## Multiple Choice Questions
-[{mcq_count} MCQs with 4 clean options A-D on separate lines, no ticks or answers on options, correct answer and explanation strictly on 'Correct Answer:' line below each question]
+**Q1.** [Question text]
+A) [Option A]
+B) [Option B]
+C) [Option C]
+D) [Option D]
+Correct Answer: [Letter] — [Brief explanation]
+
+**Q2.** [Question text]
+A) [Option A]
+B) [Option B]
+C) [Option C]
+D) [Option D]
+Correct Answer: [Letter] — [Brief explanation]
 
 ## Short Answer Questions
-[{saq_count} questions with model answers adjusted for {difficulty} level]
+**Q1.** [Question text]
+Model Answer: [2–4 sentence answer adjusted for {difficulty} level]
+
+**Q2.** [Question text]
+Model Answer: [2–4 sentence answer adjusted for {difficulty} level]
 
 ## Responsible AI Notice
 [1–2 sentences noting that this content is AI-generated and should be verified against course materials]
