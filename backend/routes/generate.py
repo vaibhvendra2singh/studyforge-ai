@@ -120,7 +120,7 @@ def generate_study_pack():
 
     clean_prompt = f"clean educational textbook diagram and scientific infographic of {topic_name}, academic vector illustration style, clear labels, high quality"
     encoded_query = urllib.parse.quote(clean_prompt)
-    image_url = f"https://image.pollinations.ai/prompt/{encoded_query}?width=1024&height=576&nologo=true&model=flux"
+    image_url = f"https://image.pollinations.ai/prompt/{encoded_query}?width=1024&height=576&nologo=true"
 
     return jsonify({
         "success": True,

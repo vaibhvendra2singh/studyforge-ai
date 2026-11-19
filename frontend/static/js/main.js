@@ -366,25 +366,51 @@ async function executeStudyPackGeneration() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
       let fullContent = "";
+      let sseBuffer = "";
       rawContainer.innerHTML = "";
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         
-        const chunkStr = decoder.decode(value, { stream: true });
-        const lines = chunkStr.split('\\n');
+        sseBuffer += decoder.decode(value, { stream: true });
+        const lines = sseBuffer.split('\n');
+        sseBuffer = lines.pop() || "";
         
         for (const line of lines) {
-          if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+          const trimmed = line.trim();
+          if (trimmed.startsWith('data: ') && trimmed !== 'data: [DONE]') {
             try {
-              const parsed = JSON.parse(line.substring(6));
-              fullContent += parsed.chunk;
-              rawContainer.innerHTML = marked.parse(fullContent);
+              const parsed = JSON.parse(trimmed.substring(6));
+              if (parsed.chunk) {
+                fullContent += parsed.chunk;
+                rawContainer.innerHTML = marked.parse(fullContent);
+              }
             } catch (e) {
-              console.error("Stream parse error", e, line);
+              console.error("Stream parse error", e, trimmed);
             }
           }
+        }
+      }
+
+      // Safeguard: If streaming was empty or truncated, fetch complete study pack via standard endpoint
+      if (!fullContent || fullContent.trim().length < 50) {
+        const fallbackRes = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            notes: notesText,
+            difficulty: appState.difficulty,
+            prompt_version: appState.promptVersion,
+            subject: subjectVal,
+            mcq_count: mcqCountVal,
+            saq_count: saqCountVal
+          })
+        });
+        const fallbackData = await fallbackRes.json();
+        if (fallbackRes.ok && fallbackData.success && fallbackData.content) {
+          fullContent = fallbackData.content;
+          rawContainer.innerHTML = marked.parse(fullContent);
         }
       }
       
@@ -505,10 +531,12 @@ function renderParsedResults(data) {
 
   const topic = data.subject || data.image_topic || 'Academic Concept';
   const encoded = encodeURIComponent(`clean educational textbook diagram and scientific infographic of ${topic}, academic vector illustration style, clear labels, high quality`);
-  const finalImgUrl = data.image_url || `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=576&nologo=true&model=flux`;
+  const finalImgUrl = data.image_url || `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=576&nologo=true`;
 
   if (diagramCard && diagramImg) {
-    diagramCard.style.display = 'block';
+    diagramCard.style.display = 'none'; // Keep hidden until successfully loaded
+    diagramImg.onload = () => { diagramCard.style.display = 'block'; };
+    diagramImg.onerror = () => { diagramCard.style.display = 'none'; };
     diagramImg.src = finalImgUrl;
     if (diagramTitle) diagramTitle.textContent = `Visual Concept: ${topic}`;
     if (diagramDownload) diagramDownload.href = finalImgUrl;
@@ -523,18 +551,25 @@ function renderParsedResults(data) {
 }
 
 function regenerateVisualDiagram() {
+  const diagramCard = document.getElementById('res-visual-diagram-card');
   const diagramImg = document.getElementById('res-diagram-img');
   const tabDiagramImg = document.getElementById('res-tab-diagram-img');
   const diagramDownload = document.getElementById('res-diagram-download-btn');
   const topic = appState.subject || appState.lastResult?.subject || 'Academic Concept';
   const seed = Math.floor(Math.random() * 1000000);
   const encoded = encodeURIComponent(`clean educational textbook diagram and scientific infographic of ${topic}, academic vector illustration style, clear labels, high quality`);
-  const newUrl = `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=576&nologo=true&model=flux&seed=${seed}`;
+  const newUrl = `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=576&nologo=true&seed=${seed}`;
 
   if (diagramImg) {
     diagramImg.style.opacity = '0.5';
     diagramImg.src = newUrl;
-    diagramImg.onload = () => { diagramImg.style.opacity = '1'; };
+    diagramImg.onload = () => {
+      diagramImg.style.opacity = '1';
+      if (diagramCard) diagramCard.style.display = 'block';
+    };
+    diagramImg.onerror = () => {
+      if (diagramCard) diagramCard.style.display = 'none';
+    };
   }
   if (tabDiagramImg) {
     tabDiagramImg.style.opacity = '0.5';
@@ -542,7 +577,7 @@ function regenerateVisualDiagram() {
     tabDiagramImg.onload = () => { tabDiagramImg.style.opacity = '1'; };
   }
   if (diagramDownload) diagramDownload.href = newUrl;
-  showNotificationToast("New diagram generated!");
+  showNotificationToast("New diagram requested!");
 }
 
 function parseStudyPackContent(text) {

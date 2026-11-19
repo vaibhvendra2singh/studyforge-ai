@@ -62,8 +62,8 @@ CONSTRAINTS:
 - Provide exactly 5 definitions in "Term: Definition" format.
 - Generate exactly {mcq_count} MCQs with 4 options (A–D) each, mark the correct answer with ✅ and provide a one-sentence explanation.
 - Generate exactly {saq_count} short-answer questions with model answers (2–4 sentences each).
-- Do NOT include information not present in the notes. If notes are insufficient, say so.
-- Avoid hallucination: base all content strictly on the provided text.
+- Ground all content in the provided lecture notes and topic. If the input is brief or presents a topic outline (e.g. 'explain photosynthesis in detail'), synthesize foundational academic curriculum facts to produce a complete, thorough study pack.
+- Ensure every single section below is fully populated with accurate, high-quality academic content.
 
 OUTPUT FORMAT (use exactly these headers):
 ## 📝 Summary
@@ -135,7 +135,7 @@ Then produce the study pack using these exact headers:
 ## 📖 Definitions
 [5 definitions relevant to the difficulty level]
 
-## ❓ Multiple Choice Questions (MCQs)
+## ❓ Multiple Choice Questions
 [{mcq_count} MCQs with 4 options, correct answer marked with ✅ and explanation]
 
 ## 💬 Short Answer Questions
@@ -144,10 +144,10 @@ Then produce the study pack using these exact headers:
 ## ⚠️ Responsible AI Notice
 [1–2 sentences noting that this content is AI-generated and should be verified against course materials]
 
-IMPORTANT GUARDRAILS:
-- Only state facts that appear in or are directly inferrable from the notes.
-- If a section cannot be completed from the available notes, write: "⚠️ Insufficient information in notes for this section."
-- Never fabricate statistics, dates, or author attributions.
+IMPORTANT INSTRUCTIONS:
+- Ground the study pack in the provided lecture notes. If the input is brief or presents a topic outline, draw upon foundational academic curriculum facts to produce a complete, thorough study pack.
+- Always generate all required sections (Summary, Key Concepts, Definitions, MCQs, Short Answers) with complete, detailed academic content.
+- Never leave sections blank or substitute placeholders.
 
 LECTURE NOTES:
 {notes}
