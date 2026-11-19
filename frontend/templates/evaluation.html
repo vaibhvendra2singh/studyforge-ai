@@ -70,40 +70,48 @@
 </nav>
 
 <div class="app-container anim-slide-down">
-
+  <div style="max-width: 1240px; margin: 0 auto;">
       
-      <!-- Header -->
-      <div style="margin-bottom:2.25rem; text-align:center; display:flex; flex-direction:column; align-items:center;">
-        <h1>Evaluation</h1>
-        <p style="max-width:700px; margin: 0 auto;">
-          Review scores for each prompt version across your real test runs.
+      <!-- Header in Simple English -->
+      <div style="margin-bottom:2rem; text-align:center; display:flex; flex-direction:column; align-items:center;">
+        <h1>AI Report Card</h1>
+        <p style="max-width:720px; margin: 0 auto; font-size:0.95rem; line-height:1.6;">
+          See how well each AI prompt performed. Grade your study packs to see real star ratings and find out which prompt gives the best results.
         </p>
+      </div>
+
+      <!-- Quick Explanation Banner -->
+      <div class="paper-card card-cream" style="margin-bottom:2rem; padding:1.25rem 1.5rem; display:flex; align-items:center; gap:1.25rem; border-left:4px solid var(--ink);">
+        <span style="font-size:1.8rem;">💡</span>
+        <div style="font-size:0.86rem; line-height:1.6;">
+          <strong>How this page works:</strong> Whenever you generate a study pack in <strong>Preparation</strong>, click the <strong>"📊 Score this Pack"</strong> button and rate it with 1 to 5 stars. Your scores automatically update here to show which prompt version works best!
+        </div>
       </div>
 
       <!-- Top 4 Overall Statistics Cards -->
       <div class="metrics-grid">
         <div class="metric-card">
-          <span class="metric-badge">REAL RUNS</span>
+          <span class="metric-badge">TESTS DONE</span>
           <div class="metric-val" id="eval-stat-total">0</div>
-          <div class="metric-label">Total Runs</div>
+          <div class="metric-label">Packs You Graded</div>
         </div>
 
         <div class="metric-card">
           <span class="metric-badge">AVERAGE</span>
           <div class="metric-val" id="eval-stat-avg">—</div>
-          <div class="metric-label">Average Score</div>
+          <div class="metric-label">Average Star Rating (Out of 5)</div>
         </div>
 
         <div class="metric-card">
-          <span class="metric-badge">TOP PROMPT</span>
+          <span class="metric-badge">WINNER</span>
           <div class="metric-val" id="eval-stat-best">—</div>
-          <div class="metric-label">Highest Scoring Prompt</div>
+          <div class="metric-label">Best Scoring Prompt</div>
         </div>
 
         <div class="metric-card">
-          <span class="metric-badge">TESTED</span>
+          <span class="metric-badge">TOPICS</span>
           <div class="metric-val" id="eval-stat-samples">0</div>
-          <div class="metric-label">Subjects Tested</div>
+          <div class="metric-label">Different Subjects Tested</div>
         </div>
       </div>
 
@@ -112,40 +120,40 @@
         <div class="card-header-editorial">
           <div class="card-title-group">
             <span>🎯</span>
-            <h3>Average Scores by Category</h3>
+            <h3>How Good Is the AI? (Score Breakdown)</h3>
           </div>
-          <span class="stamp">1.0 — 5.0 SCALE</span>
+          <span class="stamp">1 TO 5 STARS</span>
         </div>
 
         <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:1.25rem; text-align:center;">
           <div class="paper-card card-cream" style="padding:1.25rem 1rem;">
             <div style="font-family:'Archivo'; font-size:1.8rem; font-weight:900;" id="dim-score-accuracy">—</div>
-            <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; margin-top:0.35rem;">Accuracy</div>
-            <div style="font-size:0.68rem; color:var(--muted); margin-top:0.25rem;">Factually correct</div>
+            <div style="font-size:0.78rem; font-weight:700; text-transform:uppercase; margin-top:0.35rem;">Accuracy</div>
+            <div style="font-size:0.72rem; color:var(--muted); margin-top:0.25rem;">No fake facts or errors</div>
           </div>
 
           <div class="paper-card card-cream" style="padding:1.25rem 1rem;">
             <div style="font-family:'Archivo'; font-size:1.8rem; font-weight:900;" id="dim-score-relevance">—</div>
-            <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; margin-top:0.35rem;">Relevance</div>
-            <div style="font-size:0.68rem; color:var(--muted); margin-top:0.25rem;">Matches your notes</div>
+            <div style="font-size:0.78rem; font-weight:700; text-transform:uppercase; margin-top:0.35rem;">Relevance</div>
+            <div style="font-size:0.72rem; color:var(--muted); margin-top:0.25rem;">Sticks strictly to your notes</div>
           </div>
 
           <div class="paper-card card-cream" style="padding:1.25rem 1rem;">
             <div style="font-family:'Archivo'; font-size:1.8rem; font-weight:900;" id="dim-score-completeness">—</div>
-            <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; margin-top:0.35rem;">Completeness</div>
-            <div style="font-size:0.68rem; color:var(--muted); margin-top:0.25rem;">Covers all key parts</div>
+            <div style="font-size:0.78rem; font-weight:700; text-transform:uppercase; margin-top:0.35rem;">Completeness</div>
+            <div style="font-size:0.72rem; color:var(--muted); margin-top:0.25rem;">Did not miss key parts</div>
           </div>
 
           <div class="paper-card card-cream" style="padding:1.25rem 1rem;">
             <div style="font-family:'Archivo'; font-size:1.8rem; font-weight:900;" id="dim-score-quality">—</div>
-            <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; margin-top:0.35rem;">Question Quality</div>
-            <div style="font-size:0.68rem; color:var(--muted); margin-top:0.25rem;">Clear questions</div>
+            <div style="font-size:0.78rem; font-weight:700; text-transform:uppercase; margin-top:0.35rem;">Quiz Quality</div>
+            <div style="font-size:0.72rem; color:var(--muted); margin-top:0.25rem;">Clear and useful questions</div>
           </div>
 
           <div class="paper-card card-cream" style="padding:1.25rem 1rem;">
             <div style="font-family:'Archivo'; font-size:1.8rem; font-weight:900;" id="dim-score-formatting">—</div>
-            <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; margin-top:0.35rem;">Formatting</div>
-            <div style="font-size:0.68rem; color:var(--muted); margin-top:0.25rem;">Clean structure</div>
+            <div style="font-size:0.78rem; font-weight:700; text-transform:uppercase; margin-top:0.35rem;">Formatting</div>
+            <div style="font-size:0.72rem; color:var(--muted); margin-top:0.25rem;">Clean and easy to read</div>
           </div>
         </div>
       </div>
@@ -155,22 +163,22 @@
         <div class="card-header-editorial">
           <div class="card-title-group">
             <span>📈</span>
-            <h3>Prompt Scores (V1 vs V2 vs V3)</h3>
+            <h3>Prompt Showdown (Which One Wins?)</h3>
           </div>
-          <span class="stamp stamp-dark">LIVE RUNS</span>
+          <span class="stamp stamp-dark">HEAD-TO-HEAD</span>
         </div>
 
         <div style="overflow-x:auto;">
           <table class="eval-table">
             <thead>
               <tr>
-                <th>Prompt Version</th>
-                <th>Type</th>
+                <th>Prompt Name</th>
+                <th>How It Works</th>
                 <th>Accuracy</th>
-                <th>Relevance</th>
-                <th>Question Quality</th>
+                <th>Stuck to Notes</th>
+                <th>Quiz Quality</th>
                 <th>Overall Score</th>
-                <th>Runs</th>
+                <th>Times Tested</th>
               </tr>
             </thead>
             <tbody id="prompt-summary-table-body">
@@ -189,10 +197,10 @@
         <div class="card-header-editorial">
           <div class="card-title-group">
             <span>📋</span>
-            <h3>All Saved Runs</h3>
+            <h3>History of All Graded Packs</h3>
           </div>
           <div style="display:flex; gap:0.5rem;">
-            <button class="btn btn-ghost btn-sm" onclick="fetchLiveEvaluations()">Refresh</button>
+            <button class="btn btn-ghost btn-sm" onclick="fetchLiveEvaluations()">🔄 Refresh</button>
           </div>
         </div>
 
@@ -200,16 +208,16 @@
           <table class="eval-table">
             <thead>
               <tr>
-                <th>Test ID</th>
+                <th>Pack Name</th>
                 <th>Prompt</th>
                 <th>Difficulty</th>
-                <th>Accuracy</th>
-                <th>Relevance</th>
-                <th>Complete</th>
-                <th>Q-Quality</th>
-                <th>Format</th>
-                <th>Score</th>
-                <th>Notes</th>
+                <th>Facts</th>
+                <th>Notes Match</th>
+                <th>Coverage</th>
+                <th>Quiz</th>
+                <th>Look</th>
+                <th>Final Score</th>
+                <th>Your Notes</th>
                 <th>Date</th>
                 <th>Action</th>
               </tr>
@@ -224,7 +232,7 @@
           </table>
         </div>
       </div>
-
+  </div>
 </div>
 
 <script src="/static/js/main.js?v=2.2"></script>
@@ -254,13 +262,13 @@
         document.getElementById('dim-score-formatting').textContent = '—';
 
         document.getElementById('prompt-summary-table-body').innerHTML = `
-          <tr><td colspan="7" style="text-align:center; padding:2.5rem; color:var(--muted);">
-            No runs yet.
+          <tr><td colspan="7" style="text-align:center; padding:2.5rem; color:var(--muted); font-size:0.88rem;">
+            No scores yet. Make a study pack in "Preparation" and click "Score this Pack" to see which prompt wins!
           </td></tr>`;
 
         document.getElementById('evaluations-table-body').innerHTML = `
-          <tr><td colspan="12" style="text-align:center; padding:2.5rem; color:var(--muted);">
-            No runs yet. Generate a study pack and click "Score this Pack" to record your scores.
+          <tr><td colspan="12" style="text-align:center; padding:2.5rem; color:var(--muted); font-size:0.88rem;">
+            No graded packs yet. Whenever you make a study pack, click "Score this Pack" to add a rating here!
           </td></tr>`;
         return;
       }
