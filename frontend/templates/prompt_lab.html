@@ -141,29 +141,18 @@
             <div class="char-counter" id="lab-char-counter">0 / 15,000 characters</div>
           </div>
 
-          <div style="display:flex; flex-direction:column; gap:1rem;">
-            <div>
-              <label class="form-label">Difficulty Target</label>
-              <div class="segment-group" style="width:100%; display:flex; flex-direction:column; border-radius:14px; gap:2px;">
-                <button class="segment-btn" id="ldiff-beginner" onclick="setLabDifficulty('Beginner')">🌱 Beginner</button>
-                <button class="segment-btn active" id="ldiff-intermediate" onclick="setLabDifficulty('Intermediate')">⚡ Intermediate</button>
-                <button class="segment-btn" id="ldiff-advanced" onclick="setLabDifficulty('Advanced')">🔥 Advanced</button>
-              </div>
-            </div>
-
-            <div>
-              <label class="form-label">Run Individual Prompt</label>
-              <div style="display:flex; flex-direction:column; gap:0.5rem;">
-                <button class="btn btn-primary" id="btn-run-v1" style="width:100%; justify-content:center; padding:0.65rem 1rem; font-size:0.88rem;" onclick="runSinglePrompt('v1')">
-                  ⚡ Run V1 Basic
-                </button>
-                <button class="btn btn-primary" id="btn-run-v2" style="width:100%; justify-content:center; padding:0.65rem 1rem; font-size:0.88rem;" onclick="runSinglePrompt('v2')">
-                  ⚡ Run V2 Strict
-                </button>
-                <button class="btn btn-primary" id="btn-run-v3" style="width:100%; justify-content:center; padding:0.65rem 1rem; font-size:0.88rem;" onclick="runSinglePrompt('v3')">
-                  ⚡ Run V3 Smart
-                </button>
-              </div>
+          <div style="display:flex; flex-direction:column; gap:0.6rem;">
+            <label class="form-label">Run Prompt</label>
+            <div style="display:flex; flex-direction:column; gap:0.5rem;">
+              <button class="btn btn-primary" id="btn-run-v1" style="width:100%; justify-content:center; padding:0.75rem 1rem; font-size:0.9rem;" onclick="runSinglePrompt('v1')">
+                ⚡ Run V1 Basic
+              </button>
+              <button class="btn btn-primary" id="btn-run-v2" style="width:100%; justify-content:center; padding:0.75rem 1rem; font-size:0.9rem;" onclick="runSinglePrompt('v2')">
+                ⚡ Run V2 Strict
+              </button>
+              <button class="btn btn-primary" id="btn-run-v3" style="width:100%; justify-content:center; padding:0.75rem 1rem; font-size:0.9rem;" onclick="runSinglePrompt('v3')">
+                ⚡ Run V3 Smart
+              </button>
             </div>
           </div>
         </div>
