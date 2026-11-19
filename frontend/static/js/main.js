@@ -488,8 +488,54 @@ function renderParsedResults(data) {
     });
   }
 
+  // 5. Visual Diagram & Infographic Card
+  const diagramCard = document.getElementById('res-visual-diagram-card');
+  const diagramImg = document.getElementById('res-diagram-img');
+  const diagramTitle = document.getElementById('res-diagram-title');
+  const diagramDownload = document.getElementById('res-diagram-download-btn');
+  const tabDiagramImg = document.getElementById('res-tab-diagram-img');
+  const tabDiagramHeading = document.getElementById('res-tab-diagram-heading');
+
+  const topic = data.subject || data.image_topic || 'Academic Concept';
+  const encoded = encodeURIComponent(`clean educational textbook diagram and scientific infographic of ${topic}, academic vector illustration style, clear labels, high quality`);
+  const finalImgUrl = data.image_url || `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=576&nologo=true&model=flux`;
+
+  if (diagramCard && diagramImg) {
+    diagramCard.style.display = 'block';
+    diagramImg.src = finalImgUrl;
+    if (diagramTitle) diagramTitle.textContent = `Visual Concept: ${topic}`;
+    if (diagramDownload) diagramDownload.href = finalImgUrl;
+  }
+  if (tabDiagramImg) {
+    tabDiagramImg.src = finalImgUrl;
+    if (tabDiagramHeading) tabDiagramHeading.textContent = `Concept Diagram: ${topic}`;
+  }
+
   // Reset to Overview Tab
   switchResultTab('overview');
+}
+
+function regenerateVisualDiagram() {
+  const diagramImg = document.getElementById('res-diagram-img');
+  const tabDiagramImg = document.getElementById('res-tab-diagram-img');
+  const diagramDownload = document.getElementById('res-diagram-download-btn');
+  const topic = appState.subject || appState.lastResult?.subject || 'Academic Concept';
+  const seed = Math.floor(Math.random() * 1000000);
+  const encoded = encodeURIComponent(`clean educational textbook diagram and scientific infographic of ${topic}, academic vector illustration style, clear labels, high quality`);
+  const newUrl = `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=576&nologo=true&model=flux&seed=${seed}`;
+
+  if (diagramImg) {
+    diagramImg.style.opacity = '0.5';
+    diagramImg.src = newUrl;
+    diagramImg.onload = () => { diagramImg.style.opacity = '1'; };
+  }
+  if (tabDiagramImg) {
+    tabDiagramImg.style.opacity = '0.5';
+    tabDiagramImg.src = newUrl;
+    tabDiagramImg.onload = () => { tabDiagramImg.style.opacity = '1'; };
+  }
+  if (diagramDownload) diagramDownload.href = newUrl;
+  showNotificationToast("New diagram generated!");
 }
 
 function parseStudyPackContent(text) {
@@ -634,7 +680,7 @@ function switchResultTab(tabKey) {
   document.querySelectorAll('.results-tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById(`tab-btn-${tabKey}`).classList.add('active');
 
-  ['overview', 'summary', 'concepts', 'definitions', 'mcqs', 'saqs'].forEach(k => {
+  ['overview', 'summary', 'concepts', 'definitions', 'diagram', 'mcqs', 'saqs'].forEach(k => {
     const p = document.getElementById(`res-panel-${k}`);
     if (p) {
       p.style.display = (k === tabKey) ? 'block' : 'none';

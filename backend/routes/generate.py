@@ -3,6 +3,7 @@ Generate route — handles study pack generation from lecture notes
 """
 
 import json
+import urllib.parse
 from flask import Blueprint, request, jsonify
 from utils.groq_client import PROMPT_VERSIONS, call_groq
 from utils.validators import validate_notes, validate_difficulty, validate_prompt_version, sanitize_notes
@@ -106,13 +107,30 @@ def generate_study_pack():
     if not result["success"]:
         return jsonify({"error": f"AI generation failed: {result['error']}"}), 502
 
+    # Educational visual concept diagram prompt
+    topic_name = subject
+    if not topic_name:
+        for line in result["content"].split("\n"):
+            line = line.strip().lstrip("#").strip()
+            if line and len(line) < 50 and not any(w in line.lower() for w in ["summary", "study pack", "overview", "notes"]):
+                topic_name = line
+                break
+    if not topic_name:
+        topic_name = notes[:40].split("\n")[0].strip() or "Academic Concept"
+
+    clean_prompt = f"clean educational textbook diagram and scientific infographic of {topic_name}, academic vector illustration style, clear labels, high quality"
+    encoded_query = urllib.parse.quote(clean_prompt)
+    image_url = f"https://image.pollinations.ai/prompt/{encoded_query}?width=1024&height=576&nologo=true&model=flux"
+
     return jsonify({
         "success": True,
         "content": result["content"],
         "prompt_version": prompt_version,
         "prompt_version_name": prompt_name,
         "difficulty": difficulty,
-        "subject": subject,
+        "subject": subject or topic_name,
+        "image_url": image_url,
+        "image_topic": topic_name,
         "mcq_count": mcq_count,
         "saq_count": saq_count,
         "usage": result["usage"],
