@@ -425,27 +425,6 @@
       </div>
     </div>
 
-    <!-- 🖼️ Visual Concept & Diagram Card -->
-    <div id="res-visual-diagram-card" class="paper-card card-white" style="margin-bottom:1.5rem; padding:0; overflow:hidden; border-radius:18px; display:none;">
-      <div style="position:relative; width:100%; min-height:220px; max-height:420px; background:var(--card-cream); display:flex; align-items:center; justify-content:center; overflow:hidden;">
-        <img id="res-diagram-img" src="" alt="Educational Visual Concept" onerror="this.closest('#res-visual-diagram-card').style.display='none'" style="width:100%; height:auto; max-height:420px; object-fit:cover; display:block;" />
-      </div>
-      <div style="padding:0.85rem 1.25rem; display:flex; justify-content:space-between; align-items:center; background:var(--card-cream); border-top:1px solid var(--line); flex-wrap:wrap; gap:0.5rem;">
-        <div style="display:flex; align-items:center; gap:0.5rem;">
-          <span style="font-size:1.15rem;">🖼️</span>
-          <div>
-            <strong style="font-size:0.88rem;" id="res-diagram-title">Visual Concept Diagram</strong>
-            <div style="font-size:0.75rem; color:var(--muted);">AI-generated illustration to help you learn visually</div>
-          </div>
-        </div>
-        <div style="display:flex; gap:0.5rem;">
-          <a id="res-diagram-download-btn" href="#" target="_blank" download class="btn btn-secondary btn-sm">⬇️ Save Image</a>
-          <button class="btn btn-ghost btn-sm" onclick="regenerateVisualDiagram()">🔄 New Image</button>
-          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('res-visual-diagram-card').style.display='none'" title="Hide Diagram Banner">✕ Hide</button>
-        </div>
-      </div>
-    </div>
-
     <div class="results-tabs" role="tablist">
       <button class="results-tab-btn active" id="tab-btn-overview" onclick="switchResultTab('overview')">Overview</button>
       <button class="results-tab-btn" id="tab-btn-summary" onclick="switchResultTab('summary')">Summary</button>
@@ -712,7 +691,7 @@
 </div>
 
 <div class="toast-msg" id="toast-notification">✓ Done</div>
-<script src="/static/js/main.js?v=2.6"></script>
+<script src="/static/js/main.js?v=2.7"></script>
 
 </body>
 </html>

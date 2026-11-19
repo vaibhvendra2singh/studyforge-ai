@@ -60,7 +60,10 @@ CONSTRAINTS:
 - Summary must be 150–200 words maximum.
 - List exactly 5–8 key concepts, each with a one-sentence explanation.
 - Provide exactly 5 definitions in "Term: Definition" format.
-- Generate exactly {mcq_count} MCQs with 4 options (A–D) each, mark the correct answer with ✅ and provide a one-sentence explanation.
+- Generate exactly {mcq_count} distinct Multiple Choice Questions (numbered Q1 to Q{mcq_count}).
+- Each MCQ must have exactly 4 choices (A, B, C, D) on separate lines.
+- Do NOT put ticks, checkmarks (✅), or answers on the option lines. Keep all 4 options completely neutral and clean.
+- Place the correct answer and brief explanation strictly on the separate "Correct Answer:" line below each question.
 - Generate exactly {saq_count} short-answer questions with model answers (2–4 sentences each).
 - Ground all content in the provided lecture notes and topic. If the input is brief or presents a topic outline (e.g. 'explain photosynthesis in detail'), synthesize foundational academic curriculum facts to produce a complete, thorough study pack.
 - Ensure every single section below is fully populated with accurate, high-quality academic content.
@@ -76,9 +79,19 @@ OUTPUT FORMAT (use exactly these headers):
 - **Term**: Definition
 
 ## ❓ Multiple Choice Questions
-**Q1.** [Question]
-A) [Option]  B) [Option]  C) [Option]  D) [Option]
-✅ Correct Answer: [Letter] — [Brief explanation]
+**Q1.** [Question text]
+A) [Option A]
+B) [Option B]
+C) [Option C]
+D) [Option D]
+Correct Answer: [Letter] — [Brief explanation]
+
+**Q2.** [Question text]
+A) [Option A]
+B) [Option B]
+C) [Option C]
+D) [Option D]
+Correct Answer: [Letter] — [Brief explanation]
 
 ## 💬 Short Answer Questions
 **Q1.** [Question]
@@ -136,7 +149,7 @@ Then produce the study pack using these exact headers:
 [5 definitions relevant to the difficulty level]
 
 ## ❓ Multiple Choice Questions
-[{mcq_count} MCQs with 4 options, correct answer marked with ✅ and explanation]
+[{mcq_count} MCQs with 4 clean options A-D on separate lines, no ticks or answers on options, correct answer and explanation strictly on 'Correct Answer:' line below each question]
 
 ## 💬 Short Answer Questions
 [{saq_count} questions with model answers adjusted for {difficulty} level]

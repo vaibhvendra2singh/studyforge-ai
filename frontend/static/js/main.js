@@ -521,11 +521,7 @@ function renderParsedResults(data) {
     });
   }
 
-  // 5. Visual Diagram & Infographic Card
-  const diagramCard = document.getElementById('res-visual-diagram-card');
-  const diagramImg = document.getElementById('res-diagram-img');
-  const diagramTitle = document.getElementById('res-diagram-title');
-  const diagramDownload = document.getElementById('res-diagram-download-btn');
+  // 5. Visual Diagram (Dedicated Tab)
   const tabDiagramImg = document.getElementById('res-tab-diagram-img');
   const tabDiagramHeading = document.getElementById('res-tab-diagram-heading');
 
@@ -533,14 +529,6 @@ function renderParsedResults(data) {
   const encoded = encodeURIComponent(`clean educational textbook diagram and scientific infographic of ${topic}, academic vector illustration style, clear labels, high quality`);
   const finalImgUrl = data.image_url || `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=576&nologo=true`;
 
-  if (diagramCard && diagramImg) {
-    diagramCard.style.display = 'none'; // Keep hidden until successfully loaded
-    diagramImg.onload = () => { diagramCard.style.display = 'block'; };
-    diagramImg.onerror = () => { diagramCard.style.display = 'none'; };
-    diagramImg.src = finalImgUrl;
-    if (diagramTitle) diagramTitle.textContent = `Visual Concept: ${topic}`;
-    if (diagramDownload) diagramDownload.href = finalImgUrl;
-  }
   if (tabDiagramImg) {
     tabDiagramImg.src = finalImgUrl;
     if (tabDiagramHeading) tabDiagramHeading.textContent = `Concept Diagram: ${topic}`;
@@ -551,32 +539,17 @@ function renderParsedResults(data) {
 }
 
 function regenerateVisualDiagram() {
-  const diagramCard = document.getElementById('res-visual-diagram-card');
-  const diagramImg = document.getElementById('res-diagram-img');
   const tabDiagramImg = document.getElementById('res-tab-diagram-img');
-  const diagramDownload = document.getElementById('res-diagram-download-btn');
   const topic = appState.subject || appState.lastResult?.subject || 'Academic Concept';
   const seed = Math.floor(Math.random() * 1000000);
   const encoded = encodeURIComponent(`clean educational textbook diagram and scientific infographic of ${topic}, academic vector illustration style, clear labels, high quality`);
   const newUrl = `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=576&nologo=true&seed=${seed}`;
 
-  if (diagramImg) {
-    diagramImg.style.opacity = '0.5';
-    diagramImg.src = newUrl;
-    diagramImg.onload = () => {
-      diagramImg.style.opacity = '1';
-      if (diagramCard) diagramCard.style.display = 'block';
-    };
-    diagramImg.onerror = () => {
-      if (diagramCard) diagramCard.style.display = 'none';
-    };
-  }
   if (tabDiagramImg) {
     tabDiagramImg.style.opacity = '0.5';
     tabDiagramImg.src = newUrl;
     tabDiagramImg.onload = () => { tabDiagramImg.style.opacity = '1'; };
   }
-  if (diagramDownload) diagramDownload.href = newUrl;
   showNotificationToast("New diagram requested!");
 }
 
@@ -607,59 +580,102 @@ function parseStudyPackContent(text) {
     result.definitions = defMatch[1].trim().split('\n').filter(l => l.trim().startsWith('-') || l.trim().startsWith('*'));
   }
 
-  // Extract MCQs
+  // Extract MCQs (Stateful parser: handles Q1., **Q1.**, Question 1:, 1., **1.**, etc.)
   const mcqMatch = text.match(/##\s*❓\s*(?:Multiple Choice Questions|MCQs)[\s\S]*?([\s\S]*?)(?=##|$)/i);
   if (mcqMatch) {
     const rawMcqSection = mcqMatch[1].trim();
-    const qBlocks = rawMcqSection.split(/\*\*(?:Q\d+|Question\s*\d+)\.?\*\*/i).filter(b => b.trim().length > 0);
-
-    qBlocks.forEach(block => {
-      const lines = block.trim().split('\n').map(l => l.trim()).filter(l => l.length > 0);
-      if (lines.length > 0) {
-        const questionText = lines[0].replace(/^[:.\-\s]+/, '');
-        const options = [];
-        let correctAnswer = '';
-        let explanation = '';
-
-        lines.forEach(l => {
-          if (l.match(/^[A-D]\)/i) || l.match(/^[A-D]\./i)) {
-            options.push(l);
-          } else if (l.includes('Correct Answer') || l.includes('✅')) {
-            correctAnswer = l.replace(/.*(?:Correct Answer|✅)[:\s]*/i, '').trim();
-          }
-        });
-
-        if (correctAnswer.includes('—') || correctAnswer.includes('-')) {
-          const parts = correctAnswer.split(/[—\-]/);
-          correctAnswer = parts[0].trim();
-          explanation = parts.slice(1).join(' ').trim();
-        }
-
-        if (options.length >= 2) {
-          result.mcqs.push({
-            question: questionText,
-            options: options,
-            correct: correctAnswer || 'Refer to text',
-            explanation: explanation || 'Derived directly from lecture transcript facts.'
-          });
-        }
+    const rawLines = rawMcqSection.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    
+    // Split inline options like A) ... B) ... into separate lines
+    const lines = [];
+    for (const line of rawLines) {
+      if (/^[A-D][\).]\s+.*?\s+[B-D][\).]/i.test(line)) {
+        const parts = line.split(/\s+(?=[A-D][\).])/i).filter(s => s.trim().length > 0);
+        lines.push(...parts);
+      } else {
+        lines.push(line);
       }
-    });
+    }
+
+    let currentMcq = null;
+
+    for (const line of lines) {
+      const qStartMatch = line.match(/^(?:(?:\*{1,2}|#{1,4}\s*)?(?:Q(?:uestion)?\s*\d+|\d+)[\.:\)]\*{0,2})\s*(.*)/i);
+      const isOption = /^[A-D][\).:\s-]/i.test(line);
+      const isCorrect = /(?:Correct Answer|Model Answer|Answer Key|Key|✅|Answer\s*:)/i.test(line);
+
+      if (qStartMatch && !isOption && !isCorrect) {
+        if (currentMcq && currentMcq.options.length >= 2) {
+          result.mcqs.push(currentMcq);
+        }
+        let qText = qStartMatch[1].trim() || line.replace(/^(?:\*{1,2}|#{1,4}\s*)?(?:Q(?:uestion)?\s*\d+|\d+)[\.:\)]\*{0,2}\s*/i, '').trim();
+        qText = qText.replace(/^\*+|\*+$/g, '').trim();
+        currentMcq = {
+          question: qText,
+          options: [],
+          correct: '',
+          explanation: ''
+        };
+      } else if (isOption && currentMcq) {
+        // Strip any checkmarks, ticks, or letters from option text
+        const cleanOpt = line.replace(/[✅✔✓]/g, '').trim();
+        currentMcq.options.push(cleanOpt);
+      } else if (isCorrect && currentMcq) {
+        let cleanAns = line.replace(/.*(?:Correct Answer|Answer Key|Key|✅|Answer)[:\s]*/i, '').trim();
+        cleanAns = cleanAns.replace(/[✅✔✓]/g, '').trim();
+        if (cleanAns.includes('—') || cleanAns.includes('-')) {
+          const parts = cleanAns.split(/[—\-]/);
+          currentMcq.correct = parts[0].trim();
+          currentMcq.explanation = parts.slice(1).join(' ').trim();
+        } else {
+          currentMcq.correct = cleanAns;
+        }
+      } else if (currentMcq && currentMcq.options.length === 0) {
+        // Multi-line question text
+        currentMcq.question += ' ' + line.replace(/^\*+|\*+$/g, '').trim();
+      }
+    }
+
+    if (currentMcq && currentMcq.options.length >= 2) {
+      result.mcqs.push(currentMcq);
+    }
   }
 
-  // Extract Short Answers
+  // Extract Short Answers (Stateful parser)
   const saqMatch = text.match(/##\s*💬\s*Short Answer Questions([\s\S]*?)(?=##|$)/i);
   if (saqMatch) {
     const rawSaqSection = saqMatch[1].trim();
-    const blocks = rawSaqSection.split(/\*\*(?:Q\d+|Question\s*\d+)\.?\*\*/i).filter(b => b.trim().length > 0);
-    blocks.forEach(b => {
-      const lines = b.trim().split('\n').filter(l => l.trim().length > 0);
-      if (lines.length > 0) {
-        const qText = lines[0];
-        const aText = lines.slice(1).join(' ').replace(/.*Model Answer[:\s]*/i, '');
-        result.saqs.push({ question: qText, answer: aText });
+    const lines = rawSaqSection.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    let currentSaq = null;
+
+    for (const line of lines) {
+      const qStartMatch = line.match(/^(?:(?:\*{1,2}|#{1,4}\s*)?(?:Q(?:uestion)?\s*\d+|\d+)[\.:\)]\*{0,2})\s*(.*)/i);
+      const isAnswer = /(?:Model Answer|Answer|📌)[:\s]*/i.test(line);
+
+      if (qStartMatch && !isAnswer) {
+        if (currentSaq && currentSaq.answer) {
+          result.saqs.push(currentSaq);
+        }
+        let qText = qStartMatch[1].trim() || line.replace(/^(?:\*{1,2}|#{1,4}\s*)?(?:Q(?:uestion)?\s*\d+|\d+)[\.:\)]\*{0,2}\s*/i, '').trim();
+        currentSaq = {
+          question: qText.replace(/^\*+|\*+$/g, '').trim(),
+          answer: ''
+        };
+      } else if (isAnswer && currentSaq) {
+        const cleanAns = line.replace(/.*(?:Model Answer|Answer|📌)[:\s]*/i, '').trim();
+        currentSaq.answer = cleanAns;
+      } else if (currentSaq) {
+        if (currentSaq.answer) {
+          currentSaq.answer += ' ' + line;
+        } else {
+          currentSaq.question += ' ' + line;
+        }
       }
-    });
+    }
+
+    if (currentSaq && currentSaq.answer) {
+      result.saqs.push(currentSaq);
+    }
   }
 
   return result;
@@ -678,10 +694,15 @@ function createInteractiveMcqCard(mcq, num, difficulty) {
     <div class="mcq-options-grid">
       ${mcq.options.map((opt, i) => {
         const letter = String.fromCharCode(65 + i);
+        const cleanOpt = opt
+          .replace(/^[A-D][\).:\s-]+/i, '')
+          .replace(/[✅✔✓]/g, '')
+          .replace(/^\s*[-•]\s*/, '')
+          .trim();
         return `
           <button class="mcq-option-btn" onclick="selectMcqOption(this, '${letter}', ${num})">
             <span class="opt-letter">${letter}</span>
-            <span>${opt.replace(/^[A-D][\).]\s*/i, '')}</span>
+            <span>${cleanOpt}</span>
           </button>
         `;
       }).join('')}
@@ -695,8 +716,8 @@ function createInteractiveMcqCard(mcq, num, difficulty) {
     </div>
 
     <div class="mcq-reveal-box" id="mcq-reveal-${num}">
-      <div class="mcq-answer-badge">✅ KEY: ${mcq.correct}</div>
-      <p style="font-size:0.86rem; color:var(--ink); margin:0;"><strong>Explanation:</strong> ${mcq.explanation}</p>
+      <div class="mcq-answer-badge">Answer Key: ${mcq.correct}</div>
+      <p style="font-size:0.86rem; color:var(--ink); margin:0;"><strong>Explanation:</strong> ${mcq.explanation || 'Refer to lecture notes.'}</p>
     </div>
   `;
 
