@@ -925,15 +925,45 @@ function generateStudyPackPdf(packData) {
 
   showNotificationToast("Generating PDF...");
 
+  // Modal overlay ensures visible on-screen coordinate space for html2canvas
+  const overlay = document.createElement('div');
+  overlay.id = 'studyforge-pdf-overlay';
+  overlay.style.position = 'fixed';
+  overlay.style.top = '0';
+  overlay.style.left = '0';
+  overlay.style.width = '100vw';
+  overlay.style.height = '100vh';
+  overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.65)';
+  overlay.style.backdropFilter = 'blur(4px)';
+  overlay.style.zIndex = '999999';
+  overlay.style.display = 'flex';
+  overlay.style.flexDirection = 'column';
+  overlay.style.alignItems = 'center';
+  overlay.style.justifyContent = 'flex-start';
+  overlay.style.overflowY = 'auto';
+  overlay.style.padding = '30px 15px';
+
+  const statusBadge = document.createElement('div');
+  statusBadge.style.background = '#18181B';
+  statusBadge.style.color = '#FFFFFF';
+  statusBadge.style.padding = '8px 22px';
+  statusBadge.style.borderRadius = '24px';
+  statusBadge.style.fontSize = '13px';
+  statusBadge.style.fontWeight = '600';
+  statusBadge.style.marginBottom = '15px';
+  statusBadge.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+  statusBadge.textContent = 'Rendering PDF document, please wait...';
+  overlay.appendChild(statusBadge);
+
   const wrapper = document.createElement('div');
-  wrapper.style.position = 'fixed';
-  wrapper.style.left = '-9999px';
-  wrapper.style.top = '0';
-  wrapper.style.width = '750px';
+  wrapper.style.width = '780px';
+  wrapper.style.maxWidth = '100%';
   wrapper.style.background = '#ffffff';
   wrapper.style.color = '#111111';
   wrapper.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif';
   wrapper.style.padding = '36px 42px';
+  wrapper.style.borderRadius = '8px';
+  wrapper.style.boxShadow = '0 12px 36px rgba(0,0,0,0.25)';
   wrapper.style.lineHeight = '1.6';
   wrapper.style.fontSize = '13px';
 
@@ -950,7 +980,23 @@ function generateStudyPackPdf(packData) {
     </div>
   `;
 
+  // Include SVG concept diagram if available
+  const diagramSvg = packData.diagram_svg || (document.querySelector('#res-diagram-svg-target svg')?.outerHTML);
+  if (diagramSvg) {
+    html += `
+      <div style="margin-bottom: 22px; page-break-inside: avoid;">
+        <h2 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #000; border-bottom: 1px solid #e0e0e0; padding-bottom: 4px; margin-bottom: 10px;">Visual Concept Diagram</h2>
+        <div style="width: 100%; border: 1px solid #e5e5e5; border-radius: 6px; overflow: hidden; background: #fafafa; padding: 10px; text-align: center;">
+          ${diagramSvg}
+        </div>
+      </div>
+    `;
+  }
+
+  let hasSections = false;
+
   if (parsed.summary) {
+    hasSections = true;
     html += `
       <div style="margin-bottom: 22px; page-break-inside: avoid;">
         <h2 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #000; border-bottom: 1px solid #e0e0e0; padding-bottom: 4px; margin-bottom: 8px;">Summary</h2>
@@ -962,6 +1008,7 @@ function generateStudyPackPdf(packData) {
   }
 
   if (parsed.concepts && parsed.concepts.length > 0) {
+    hasSections = true;
     html += `
       <div style="margin-bottom: 22px; page-break-inside: avoid;">
         <h2 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #000; border-bottom: 1px solid #e0e0e0; padding-bottom: 4px; margin-bottom: 8px;">Key Concepts</h2>
@@ -973,6 +1020,7 @@ function generateStudyPackPdf(packData) {
   }
 
   if (parsed.definitions && parsed.definitions.length > 0) {
+    hasSections = true;
     html += `
       <div style="margin-bottom: 22px; page-break-inside: avoid;">
         <h2 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #000; border-bottom: 1px solid #e0e0e0; padding-bottom: 4px; margin-bottom: 8px;">Definitions</h2>
@@ -988,6 +1036,7 @@ function generateStudyPackPdf(packData) {
   }
 
   if (parsed.mcqs && parsed.mcqs.length > 0) {
+    hasSections = true;
     html += `
       <div style="margin-bottom: 22px;">
         <h2 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #000; border-bottom: 1px solid #e0e0e0; padding-bottom: 4px; margin-bottom: 10px;">Practice Quiz</h2>
@@ -997,7 +1046,7 @@ function generateStudyPackPdf(packData) {
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 8px;">
               ${mcq.options.map((opt, i) => {
                 const letter = String.fromCharCode(65 + i);
-                const clean = opt.replace(/^[A-D][\).:\s-]+/i, '').replace(/[✅✔✓]/g, '').trim();
+                const clean = opt.replace(/^[A-D][\).:\s-]+/i, '').replace(/[\u2705\u2714\u2713\u2611\[x\]]/gi, '').trim();
                 return `<div style="padding: 5px 8px; background: #f4f4f4; border-radius: 4px; font-size: 11.5px;"><strong>${letter})</strong> ${escapeHtml(clean)}</div>`;
               }).join('')}
             </div>
@@ -1011,6 +1060,7 @@ function generateStudyPackPdf(packData) {
   }
 
   if (parsed.saqs && parsed.saqs.length > 0) {
+    hasSections = true;
     html += `
       <div style="margin-bottom: 22px;">
         <h2 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #000; border-bottom: 1px solid #e0e0e0; padding-bottom: 4px; margin-bottom: 10px;">Short Answer Questions</h2>
@@ -1026,6 +1076,15 @@ function generateStudyPackPdf(packData) {
     `;
   }
 
+  // Fallback: If no structured sections matched, render entire markdown content
+  if (!hasSections) {
+    html += `
+      <div style="margin-bottom: 22px; font-size: 13px; line-height: 1.7; color: #222;">
+        ${marked.parse(content)}
+      </div>
+    `;
+  }
+
   html += `
     <div style="border-top: 1px solid #e0e0e0; padding-top: 10px; margin-top: 24px; font-size: 10px; color: #777; text-align: center;">
       Generated by StudyForge AI - Comprehensive Academic Study Pack
@@ -1033,7 +1092,8 @@ function generateStudyPackPdf(packData) {
   `;
 
   wrapper.innerHTML = html;
-  document.body.appendChild(wrapper);
+  overlay.appendChild(wrapper);
+  document.body.appendChild(overlay);
 
   const cleanTitle = (subject || 'StudyPack').replace(/[^a-zA-Z0-9_-]/g, '_');
   const filename = `StudyForge_${cleanTitle}_${difficulty}.pdf`;
@@ -1043,19 +1103,29 @@ function generateStudyPackPdf(packData) {
       margin:       [10, 10, 10, 10],
       filename:     filename,
       image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      html2canvas:  {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        letterRendering: true,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: 800
+      },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak:    { mode: ['css', 'legacy'] }
     };
     html2pdf().set(opt).from(wrapper).save().then(() => {
-      document.body.removeChild(wrapper);
+      if (document.body.contains(overlay)) document.body.removeChild(overlay);
       showNotificationToast("PDF downloaded successfully!");
     }).catch(err => {
       console.error("PDF export error", err);
-      document.body.removeChild(wrapper);
+      if (document.body.contains(overlay)) document.body.removeChild(overlay);
+      showNotificationToast("Exporting via browser print...");
       window.print();
     });
   } else {
-    document.body.removeChild(wrapper);
+    if (document.body.contains(overlay)) document.body.removeChild(overlay);
     window.print();
   }
 }
