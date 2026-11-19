@@ -458,16 +458,16 @@
     <div id="res-panel-diagram" class="paper-card card-white" style="display:none; padding:2rem 1.5rem;">
       <div style="max-width:860px; margin:0 auto;">
         
-        <!-- Header & View Mode Switcher -->
+        <!-- Header -->
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.25rem; padding-bottom:1rem; border-bottom:1px solid var(--line);">
           <div>
             <h3 id="res-tab-diagram-heading" style="margin:0 0 0.25rem 0; font-size:1.2rem;">Visual Diagram &amp; Concept Map</h3>
-            <p id="res-tab-diagram-sub" style="font-size:0.84rem; color:var(--muted); margin:0;">AI-generated infographic diagram and visual reference.</p>
+            <p id="res-tab-diagram-sub" style="font-size:0.84rem; color:var(--muted); margin:0;">AI-generated vector concept diagram.</p>
           </div>
           
           <div style="display:flex; gap:0.5rem; align-items:center;">
-            <button class="btn btn-secondary btn-sm" id="btn-show-svg" onclick="switchDiagramView('svg')" style="font-weight:700;">AI Diagram (SVG)</button>
-            <button class="btn btn-ghost btn-sm" id="btn-show-photo" onclick="switchDiagramView('photo')" style="display:none;">Textbook Photo</button>
+            <button class="btn btn-secondary btn-sm" id="btn-regen-diagram" onclick="regenerateVisualDiagram()">Generate New AI Diagram</button>
+            <button class="btn btn-secondary btn-sm" onclick="downloadDiagramSvg()">Download Diagram (SVG)</button>
           </div>
         </div>
 
@@ -478,18 +478,6 @@
             <div style="font-weight:600; font-size:0.92rem;">Generating AI Infographic Diagram...</div>
           </div>
           <div id="res-diagram-svg-target" style="width:100%; height:auto;"></div>
-        </div>
-
-        <!-- Photo Container (Wikipedia) -->
-        <div id="res-diagram-photo-container" style="display:none; width:100%; border-radius:14px; overflow:hidden; border:1px solid var(--line); margin-bottom:1.25rem; text-align:center; background:var(--card-cream); padding:1rem;">
-          <img id="res-tab-diagram-img" src="" alt="Educational Visual Reference" style="max-width:100%; max-height:480px; object-fit:contain; border-radius:10px;" />
-          <div id="res-tab-photo-caption" style="font-size:0.8rem; color:var(--muted); margin-top:0.75rem;">Source: Wikimedia Educational Commons</div>
-        </div>
-
-        <!-- Action Controls -->
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
-          <button class="btn btn-primary btn-sm" id="btn-regen-diagram" onclick="regenerateVisualDiagram()">Generate New AI Diagram</button>
-          <button class="btn btn-secondary btn-sm" onclick="downloadDiagramSvg()">Download Diagram (SVG)</button>
         </div>
 
       </div>
@@ -726,7 +714,7 @@
 </div>
 
 <div class="toast-msg" id="toast-notification"> Done</div>
-<script src="/static/js/main.js?v=6.0"></script>
+<script src="/static/js/main.js?v=7.0"></script>
 
 </body>
 </html>

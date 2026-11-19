@@ -440,17 +440,6 @@ async function executeStudyPackGeneration() {
           if (diagData.svg) finalData.diagram_svg = diagData.svg;
         }
       } catch (e) { /* silent */ }
-
-      // Fetch Wikipedia image for streamed results
-      try {
-        const wikiSlug = encodeURIComponent(subjectVal || 'General Lecture');
-        const wikiRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${wikiSlug}`);
-        if (wikiRes.ok) {
-          const wikiData = await wikiRes.json();
-          const src = (wikiData.originalimage || wikiData.thumbnail || {}).source || '';
-          if (src) finalData.image_url = src.replace(/\/\d+px-/, '/800px-');
-        }
-      } catch (e) { /* silent */ }
       
       appState.lastResult = finalData;
       appState.currentNotes = notesText;
@@ -557,11 +546,8 @@ function renderParsedResults(data) {
     });
   }
 
-  // 5. Visual Diagram (AI Vector Diagram + Encyclopedic Reference)
+  // 5. Visual Diagram (AI Vector Diagram only)
   const svgTarget = document.getElementById('res-diagram-svg-target');
-  const photoContainer = document.getElementById('res-diagram-photo-container');
-  const tabDiagramImg = document.getElementById('res-tab-diagram-img');
-  const btnShowPhoto = document.getElementById('btn-show-photo');
   const heading = document.getElementById('res-tab-diagram-heading');
   
   const topic = data.subject || data.image_topic || 'Academic Concept';
@@ -583,16 +569,6 @@ function renderParsedResults(data) {
       if (res.svg && svgTarget) svgTarget.innerHTML = res.svg;
     }).catch(e => console.error("Auto diagram load error:", e));
   }
-
-  // Handle optional Wikipedia reference photo
-  if (data.image_url && tabDiagramImg && btnShowPhoto) {
-    tabDiagramImg.src = data.image_url;
-    btnShowPhoto.style.display = 'inline-block';
-  } else if (btnShowPhoto) {
-    btnShowPhoto.style.display = 'none';
-  }
-
-  switchDiagramView('svg');
 
   // Reset to Overview Tab
   switchResultTab('overview');
@@ -629,26 +605,6 @@ async function regenerateVisualDiagram() {
     if (loader) loader.style.display = 'none';
     if (svgTarget) svgTarget.style.opacity = '1';
     if (btnRegen) btnRegen.disabled = false;
-    switchDiagramView('svg');
-  }
-}
-
-function switchDiagramView(mode) {
-  const svgBox = document.getElementById('res-diagram-svg-container');
-  const photoBox = document.getElementById('res-diagram-photo-container');
-  const btnSvg = document.getElementById('btn-show-svg');
-  const btnPhoto = document.getElementById('btn-show-photo');
-
-  if (mode === 'photo') {
-    if (svgBox) svgBox.style.display = 'none';
-    if (photoBox) photoBox.style.display = 'block';
-    if (btnSvg) { btnSvg.className = 'btn btn-ghost btn-sm'; btnSvg.style.fontWeight = 'normal'; }
-    if (btnPhoto) { btnPhoto.className = 'btn btn-secondary btn-sm'; btnPhoto.style.fontWeight = '700'; }
-  } else {
-    if (svgBox) svgBox.style.display = 'flex';
-    if (photoBox) photoBox.style.display = 'none';
-    if (btnSvg) { btnSvg.className = 'btn btn-secondary btn-sm'; btnSvg.style.fontWeight = '700'; }
-    if (btnPhoto) { btnPhoto.className = 'btn btn-ghost btn-sm'; btnPhoto.style.fontWeight = 'normal'; }
   }
 }
 
@@ -1169,6 +1125,10 @@ function savePackToLibrary(data) {
     content: data.content
   };
 
+  if (appState.lastResult) {
+    appState.lastResult.id = newPack.id;
+  }
+
   appState.libraryPacks.unshift(newPack);
   localStorage.setItem('studyforge_library_packs', JSON.stringify(appState.libraryPacks));
   renderDashboardRecentPacks();
@@ -1297,23 +1257,38 @@ function duplicatePackToEditor(id) {
 
 async function deleteSavedPack(id) {
   if (!confirm("Delete this study pack?")) return;
+  const deletedPack = appState.libraryPacks.find(p => p.id === id);
   appState.libraryPacks = appState.libraryPacks.filter(p => p.id !== id);
   localStorage.setItem('studyforge_library_packs', JSON.stringify(appState.libraryPacks));
 
-  // If no packs remain, also reset evaluations so the report card resets to zero
-  if (appState.libraryPacks.length === 0) {
-    try {
+  // Sync / adjust evaluations with remaining library packs
+  const remainingIds = appState.libraryPacks.map(p => p.id);
+  const remainingTitles = appState.libraryPacks.map(p => (p.title || '').toLowerCase());
+
+  try {
+    if (appState.libraryPacks.length === 0) {
       await fetch('/api/evaluate', { method: 'DELETE' });
-    } catch (e) {
-      console.error("Error resetting evaluations:", e);
+    } else {
+      await fetch('/api/evaluate/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          valid_pack_ids: remainingIds,
+          valid_titles: remainingTitles,
+          deleted_id: id,
+          deleted_title: deletedPack ? (deletedPack.title || '').toLowerCase() : ''
+        })
+      });
     }
+  } catch (e) {
+    console.error("Error syncing evaluations:", e);
   }
 
   renderLibrary();
   renderDashboardRecentPacks();
   renderSubjectFilters();
   updateDashboardMetrics();
-  showNotificationToast("Study pack deleted.");
+  showNotificationToast("Study pack deleted and evaluation scores updated.");
 }
 
 async function clearAllPacksAndEvaluations() {
@@ -1469,6 +1444,8 @@ async function submitRubricEvaluation() {
   try {
     const payload = {
       test_id: sampleId,
+      pack_id: appState.lastResult?.id || '',
+      pack_title: appState.lastResult?.subject || sampleId,
       prompt_version: appState.lastResult?.prompt_version || appState.promptVersion,
       difficulty: appState.lastResult?.difficulty || appState.difficulty,
       notes_snippet: (appState.currentNotes || 'Sample evaluation notes').slice(0, 200),

@@ -75,6 +75,8 @@ def submit_evaluation():
     entry = {
         "id": datetime.utcnow().strftime("%Y%m%d%H%M%S%f"),
         "timestamp": datetime.utcnow().isoformat() + "Z",
+        "pack_id": data.get("pack_id", ""),
+        "pack_title": data.get("pack_title", data.get("test_id", "")),
         "test_id": data["test_id"],
         "prompt_version": data["prompt_version"],
         "difficulty": data["difficulty"],
@@ -95,6 +97,47 @@ def submit_evaluation():
         "entry": entry,
         "message": "Evaluation recorded successfully."
     })
+
+
+@evaluate_bp.route("/evaluate/sync", methods=["POST"])
+def sync_evaluations():
+    """
+    POST /api/evaluate/sync
+    Syncs evaluations with the active study packs in Library.
+    If valid_pack_ids is empty, resets all evaluations.
+    If a deleted pack is specified, removes its corresponding evaluation.
+    """
+    try:
+        data = request.get_json(force=True)
+    except Exception:
+        data = {}
+
+    valid_ids = set(data.get("valid_pack_ids", []))
+    valid_titles = set(t.lower() for t in data.get("valid_titles", []))
+    deleted_id = data.get("deleted_id")
+    deleted_title = (data.get("deleted_title") or "").lower()
+
+    evals = load_evaluations()
+
+    if not valid_ids and not valid_titles:
+        save_evaluations([])
+        return jsonify({"success": True, "evaluations": [], "count": 0})
+
+    filtered = []
+    for e in evals:
+        e_pid = e.get("pack_id")
+        e_title = (e.get("pack_title") or e.get("test_id") or "").lower()
+        if deleted_id and e_pid == deleted_id:
+            continue
+        if deleted_title and (e_title == deleted_title or deleted_title in e_title):
+            continue
+        # Also ensure evaluation still belongs to an existing pack
+        if valid_ids and e_pid and e_pid not in valid_ids:
+            continue
+        filtered.append(e)
+
+    save_evaluations(filtered)
+    return jsonify({"success": True, "evaluations": filtered, "count": len(filtered)})
 
 
 @evaluate_bp.route("/evaluate", methods=["GET"])

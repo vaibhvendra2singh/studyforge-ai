@@ -14,50 +14,6 @@ from utils.pdf_parser import extract_text_from_pdf
 generate_bp = Blueprint("generate", __name__)
 
 
-def get_wikipedia_image(topic: str) -> str:
-    """
-    Fetch an educational topic-related image from Wikipedia API.
-    Uses REST summary API first, then falls back to Wikipedia query search.
-    Returns direct image URL string or empty string on failure.
-    """
-    if not topic or not topic.strip():
-        return ""
-    
-    clean_topic = topic.strip()
-    headers = {"User-Agent": "StudyForgeAI/2.0 (educational tool; mailto:contact@studyforge.ai)"}
-
-    # 1. Try Wikipedia REST Page Summary
-    try:
-        slug = urllib.parse.quote(clean_topic, safe='')
-        url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{slug}"
-        req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req, timeout=3) as resp:
-            data = json.loads(resp.read().decode())
-        for key in ("originalimage", "thumbnail"):
-            src = data.get(key, {}).get("source", "")
-            if src:
-                return re.sub(r"/\d+px-", "/800px-", src)
-    except Exception:
-        pass
-
-    # 2. Try Wikipedia Action Query Generator Search (high hit rate for all topics)
-    try:
-        query = urllib.parse.quote(clean_topic)
-        url = f"https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch={query}&gsrlimit=3&prop=pageimages&pithumbsize=800&format=json"
-        req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req, timeout=3) as resp:
-            data = json.loads(resp.read().decode())
-        pages = data.get("query", {}).get("pages", {})
-        for _, pdata in pages.items():
-            thumb = pdata.get("thumbnail", {}).get("source", "")
-            if thumb:
-                return thumb
-    except Exception:
-        pass
-
-    return ""
-
-
 def generate_fallback_svg(topic: str) -> str:
     """
     Generate an offline, guaranteed high-quality SVG concept flowchart.
@@ -191,7 +147,7 @@ def generate_study_pack():
     """
     POST /api/generate
     Accepts JSON or multipart form data.
-    Returns AI-generated study pack content with AI SVG diagram and Wikipedia imagery.
+    Returns AI-generated study pack content with AI SVG diagram.
     """
     # ── Determine input type ──────────────────────────────────────────
     subject = ""
@@ -292,10 +248,7 @@ def generate_study_pack():
     if not topic_name:
         topic_name = notes[:40].split("\n")[0].strip() or "Academic Concept"
 
-    # 1. Fetch Wikimedia authentic educational image
-    image_url = get_wikipedia_image(topic_name)
-
-    # 2. Generate Groq AI SVG diagram
+    # Generate Groq AI SVG concept diagram
     diagram_svg = generate_ai_diagram_svg(topic_name, notes[:300])
     if not diagram_svg:
         diagram_svg = generate_fallback_svg(topic_name)
@@ -307,7 +260,6 @@ def generate_study_pack():
         "prompt_version_name": prompt_name,
         "difficulty": difficulty,
         "subject": subject or topic_name,
-        "image_url": image_url,
         "diagram_svg": diagram_svg,
         "image_topic": topic_name,
         "mcq_count": mcq_count,

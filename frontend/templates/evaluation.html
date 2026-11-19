@@ -237,6 +237,24 @@
 
   async function fetchLiveEvaluations() {
     try {
+      // Auto-sync evaluations with existing study packs
+      let storedPacks = [];
+      try {
+        storedPacks = JSON.parse(localStorage.getItem('studyforge_library_packs') || '[]');
+      } catch (e) { storedPacks = []; }
+
+      if (storedPacks.length === 0) {
+        await fetch('/api/evaluate', { method: 'DELETE' });
+      } else {
+        const validIds = storedPacks.map(p => p.id);
+        const validTitles = storedPacks.map(p => (p.title || '').toLowerCase());
+        await fetch('/api/evaluate/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ valid_pack_ids: validIds, valid_titles: validTitles })
+        });
+      }
+
       const resp = await fetch('/api/evaluate');
       const data = await resp.json();
       const list = data.evaluations || [];
