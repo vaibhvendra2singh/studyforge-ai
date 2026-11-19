@@ -30,6 +30,13 @@ app.register_blueprint(prompt_lab_bp, url_prefix="/api")
 # Serve the frontend pages
 from flask import render_template, jsonify
 
+@app.after_request
+def add_cache_control_headers(response):
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
 @app.route("/")
 def index():
     return render_template("index.html")

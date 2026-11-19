@@ -425,7 +425,23 @@ async function executeStudyPackGeneration() {
         saq_count: saqCountVal
       };
       
-      // Fetch Wikipedia image for streamed results (no image_url from SSE)
+      // Fetch AI diagram for streamed results
+      try {
+        const diagRes = await fetch('/api/diagram/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            topic: subjectVal || 'General Lecture',
+            notes: notesText.slice(0, 300)
+          })
+        });
+        if (diagRes.ok) {
+          const diagData = await diagRes.json();
+          if (diagData.svg) finalData.diagram_svg = diagData.svg;
+        }
+      } catch (e) { /* silent */ }
+
+      // Fetch Wikipedia image for streamed results
       try {
         const wikiSlug = encodeURIComponent(subjectVal || 'General Lecture');
         const wikiRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${wikiSlug}`);
@@ -434,7 +450,7 @@ async function executeStudyPackGeneration() {
           const src = (wikiData.originalimage || wikiData.thumbnail || {}).source || '';
           if (src) finalData.image_url = src.replace(/\/\d+px-/, '/800px-');
         }
-      } catch (e) { /* silent: will fallback inside renderParsedResults */ }
+      } catch (e) { /* silent */ }
       
       appState.lastResult = finalData;
       appState.currentNotes = notesText;
@@ -541,55 +557,121 @@ function renderParsedResults(data) {
     });
   }
 
-  // 5. Visual Diagram (Dedicated Tab only — no full-width banner)
+  // 5. Visual Diagram (AI Vector Diagram + Encyclopedic Reference)
+  const svgTarget = document.getElementById('res-diagram-svg-target');
+  const photoContainer = document.getElementById('res-diagram-photo-container');
   const tabDiagramImg = document.getElementById('res-tab-diagram-img');
-  const tabDiagramHeading = document.getElementById('res-tab-diagram-heading');
-  const tabDiagramError = document.getElementById('res-tab-diagram-error');
-
+  const btnShowPhoto = document.getElementById('btn-show-photo');
+  const heading = document.getElementById('res-tab-diagram-heading');
+  
   const topic = data.subject || data.image_topic || 'Academic Concept';
+  if (heading) heading.textContent = `Visual Diagram: ${topic}`;
 
-  // Use Wikipedia image URL from backend, or build Pollinations fallback
-  const encoded = encodeURIComponent(`clean educational diagram of ${topic}, textbook illustration style`);
-  const finalImgUrl = data.image_url ||
-    `https://image.pollinations.ai/prompt/${encoded}?width=800&height=576&nologo=true`;
-
-  if (tabDiagramImg) {
-    if (tabDiagramError) tabDiagramError.style.display = 'none';
-    tabDiagramImg.style.display = 'block';
-    tabDiagramImg.onload = () => { tabDiagramImg.style.opacity = '1'; };
-    tabDiagramImg.onerror = () => {
-      tabDiagramImg.style.display = 'none';
-      if (tabDiagramError) tabDiagramError.style.display = 'block';
-    };
-    tabDiagramImg.style.opacity = '0.5';
-    tabDiagramImg.src = finalImgUrl;
-    if (tabDiagramHeading) tabDiagramHeading.textContent = `Concept Diagram: ${topic}`;
+  // If diagram SVG is provided, render it directly
+  if (data.diagram_svg && svgTarget) {
+    svgTarget.innerHTML = data.diagram_svg;
+  } else if (svgTarget) {
+    // Generate inline on-the-fly if missing
+    fetch('/api/diagram/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        topic: topic,
+        notes: appState.currentNotes ? appState.currentNotes.slice(0, 300) : ''
+      })
+    }).then(r => r.json()).then(res => {
+      if (res.svg && svgTarget) svgTarget.innerHTML = res.svg;
+    }).catch(e => console.error("Auto diagram load error:", e));
   }
+
+  // Handle optional Wikipedia reference photo
+  if (data.image_url && tabDiagramImg && btnShowPhoto) {
+    tabDiagramImg.src = data.image_url;
+    btnShowPhoto.style.display = 'inline-block';
+  } else if (btnShowPhoto) {
+    btnShowPhoto.style.display = 'none';
+  }
+
+  switchDiagramView('svg');
 
   // Reset to Overview Tab
   switchResultTab('overview');
 }
 
-function regenerateVisualDiagram() {
-  const tabDiagramImg = document.getElementById('res-tab-diagram-img');
-  const tabDiagramError = document.getElementById('res-tab-diagram-error');
+async function regenerateVisualDiagram() {
+  const svgTarget = document.getElementById('res-diagram-svg-target');
+  const loader = document.getElementById('res-diagram-loading');
+  const btnRegen = document.getElementById('btn-regen-diagram');
   const topic = appState.subject || appState.lastResult?.subject || 'Academic Concept';
-  const seed = Math.floor(Math.random() * 1000000);
-  const encoded = encodeURIComponent(`clean educational diagram of ${topic}, textbook illustration style`);
-  const newUrl = `https://image.pollinations.ai/prompt/${encoded}?width=800&height=576&nologo=true&seed=${seed}`;
 
-  if (tabDiagramImg) {
-    if (tabDiagramError) tabDiagramError.style.display = 'none';
-    tabDiagramImg.style.display = 'block';
-    tabDiagramImg.style.opacity = '0.5';
-    tabDiagramImg.src = newUrl;
-    tabDiagramImg.onload = () => { tabDiagramImg.style.opacity = '1'; };
-    tabDiagramImg.onerror = () => {
-      tabDiagramImg.style.display = 'none';
-      if (tabDiagramError) tabDiagramError.style.display = 'block';
-    };
+  if (loader) loader.style.display = 'block';
+  if (svgTarget) svgTarget.style.opacity = '0.3';
+  if (btnRegen) btnRegen.disabled = true;
+
+  try {
+    const res = await fetch('/api/diagram/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        topic: topic,
+        notes: appState.currentNotes ? appState.currentNotes.slice(0, 300) : ''
+      })
+    });
+    const data = await res.json();
+    if (data.svg && svgTarget) {
+      svgTarget.innerHTML = data.svg;
+      if (appState.lastResult) appState.lastResult.diagram_svg = data.svg;
+      showNotificationToast("New AI diagram generated!");
+    }
+  } catch (err) {
+    showNotificationToast("Failed to generate diagram. Try again.");
+  } finally {
+    if (loader) loader.style.display = 'none';
+    if (svgTarget) svgTarget.style.opacity = '1';
+    if (btnRegen) btnRegen.disabled = false;
+    switchDiagramView('svg');
   }
-  showNotificationToast("New diagram requested!");
+}
+
+function switchDiagramView(mode) {
+  const svgBox = document.getElementById('res-diagram-svg-container');
+  const photoBox = document.getElementById('res-diagram-photo-container');
+  const btnSvg = document.getElementById('btn-show-svg');
+  const btnPhoto = document.getElementById('btn-show-photo');
+
+  if (mode === 'photo') {
+    if (svgBox) svgBox.style.display = 'none';
+    if (photoBox) photoBox.style.display = 'block';
+    if (btnSvg) { btnSvg.className = 'btn btn-ghost btn-sm'; btnSvg.style.fontWeight = 'normal'; }
+    if (btnPhoto) { btnPhoto.className = 'btn btn-secondary btn-sm'; btnPhoto.style.fontWeight = '700'; }
+  } else {
+    if (svgBox) svgBox.style.display = 'flex';
+    if (photoBox) photoBox.style.display = 'none';
+    if (btnSvg) { btnSvg.className = 'btn btn-secondary btn-sm'; btnSvg.style.fontWeight = '700'; }
+    if (btnPhoto) { btnPhoto.className = 'btn btn-ghost btn-sm'; btnPhoto.style.fontWeight = 'normal'; }
+  }
+}
+
+function downloadDiagramSvg() {
+  const svgTarget = document.getElementById('res-diagram-svg-target');
+  if (!svgTarget) return;
+  const svgEl = svgTarget.querySelector('svg');
+  if (!svgEl) {
+    showNotificationToast("No diagram available to download.");
+    return;
+  }
+  const svgData = new XMLSerializer().serializeToString(svgEl);
+  const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const topic = (appState.subject || appState.lastResult?.subject || 'Diagram').replace(/\s+/g, '_');
+  a.href = url;
+  a.download = `StudyForge_${topic}_Diagram.svg`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showNotificationToast("Diagram downloaded!");
 }
 
 function parseStudyPackContent(text) {
@@ -617,20 +699,19 @@ function parseStudyPackContent(text) {
   // Extract Definitions — handle bullet (-/*), numbered (1.), or plain **Term**: lines
   const defMatch = text.match(/##\s*Definitions([\s\S]*?)(?=##|$)/i);
   if (defMatch) {
-    result.definitions = defMatch[1].trim().split('\n').filter(l => {
-      const t = l.trim();
-      if (!t || t.length < 3) return false;
+    result.definitions = defMatch[1].trim().split('\n').map(l => l.trim()).filter(l => {
+      if (!l || l.length < 3) return false;
       return (
-        t.startsWith('-') ||
-        t.startsWith('*') ||
-        /^\d+\./.test(t) ||
-        /^\*{0,2}[A-Z][\w\s()/-]+\*{0,2}:/.test(t)   // "Term: ..." or "**Term**: ..."
+        l.startsWith('-') ||
+        l.startsWith('*') ||
+        /^\d+[\.:\)]/.test(l) ||
+        l.includes(':')
       );
-    }).map(l => l.trim());
+    });
   }
 
   // Extract MCQs (Stateful parser: handles Q1., **Q1.**, Question 1:, 1., **1.**, etc.)
-  const mcqMatch = text.match(/##\s*(?:Multiple Choice Questions|MCQs)[\s\S]*?([\s\S]*?)(?=##|$)/i);
+  const mcqMatch = text.match(/##\s*(?:Multiple[- ]?Choice(?:\s+Questions)?|Practice Quiz|MCQs)([\s\S]*?)(?=##|$)/i);
   if (mcqMatch) {
     const rawMcqSection = mcqMatch[1].trim();
     const rawLines = rawMcqSection.split('\n').map(l => l.trim()).filter(l => l.length > 0);
@@ -666,7 +747,10 @@ function parseStudyPackContent(text) {
           explanation: ''
         };
       } else if (isOption && currentMcq) {
-        const cleanOpt = line.replace(/^[A-D][\).:\s-]+/i, '').replace(/[✅✔✓]/g, '').trim();
+        const cleanOpt = line
+          .replace(/^[A-D][\).:\s-]+/i, '')
+          .replace(/[\u2705\u2714\u2713\u2611\[x\]]/gi, '')
+          .trim();
         currentMcq.options.push(cleanOpt);
       } else if (isCorrect && currentMcq) {
         let cleanAns = line.replace(/.*(?:Correct Answer|Answer Key|\bKey\b|Answer)[:\s*]*/i, '').trim();
@@ -690,7 +774,7 @@ function parseStudyPackContent(text) {
   }
 
   // Extract Short Answers (Stateful parser)
-  const saqMatch = text.match(/##\s*Short Answer Questions([\s\S]*?)(?=##|$)/i);
+  const saqMatch = text.match(/##\s*(?:Short Answer(?:\s+Questions)?|SAQs)([\s\S]*?)(?=##|$)/i);
   if (saqMatch) {
     const rawSaqSection = saqMatch[1].trim();
     const lines = rawSaqSection.split('\n').map(l => l.trim()).filter(l => l.length > 0);
@@ -744,7 +828,7 @@ function createInteractiveMcqCard(mcq, num, difficulty) {
         const letter = String.fromCharCode(65 + i);
         const cleanOpt = opt
           .replace(/^[A-D][\).:\s-]+/i, '')
-          .replace(/[]/g, '')
+          .replace(/[\u2705\u2714\u2713\u2611\[x\]]/gi, '')
           .replace(/^\s*[-•]\s*/, '')
           .trim();
         return `

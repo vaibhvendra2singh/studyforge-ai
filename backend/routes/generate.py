@@ -16,25 +16,174 @@ generate_bp = Blueprint("generate", __name__)
 
 def get_wikipedia_image(topic: str) -> str:
     """
-    Fetch a topic-related image from Wikipedia's REST API.
-    Returns image URL string or empty string on failure.
+    Fetch an educational topic-related image from Wikipedia API.
+    Uses REST summary API first, then falls back to Wikipedia query search.
+    Returns direct image URL string or empty string on failure.
     """
+    if not topic or not topic.strip():
+        return ""
+    
+    clean_topic = topic.strip()
+    headers = {"User-Agent": "StudyForgeAI/2.0 (educational tool; mailto:contact@studyforge.ai)"}
+
+    # 1. Try Wikipedia REST Page Summary
     try:
-        slug = urllib.parse.quote(topic.strip(), safe='')
+        slug = urllib.parse.quote(clean_topic, safe='')
         url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{slug}"
-        req = urllib.request.Request(url, headers={"User-Agent": "StudyForgeAI/1.0 (educational tool)"})
-        with urllib.request.urlopen(req, timeout=4) as resp:
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=3) as resp:
             data = json.loads(resp.read().decode())
-        # Try original image first (larger), then thumbnail
         for key in ("originalimage", "thumbnail"):
             src = data.get(key, {}).get("source", "")
             if src:
-                # Upscale thumb to 800px wide
-                src = re.sub(r"/\d+px-", "/800px-", src)
-                return src
+                return re.sub(r"/\d+px-", "/800px-", src)
     except Exception:
         pass
+
+    # 2. Try Wikipedia Action Query Generator Search (high hit rate for all topics)
+    try:
+        query = urllib.parse.quote(clean_topic)
+        url = f"https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch={query}&gsrlimit=3&prop=pageimages&pithumbsize=800&format=json"
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=3) as resp:
+            data = json.loads(resp.read().decode())
+        pages = data.get("query", {}).get("pages", {})
+        for _, pdata in pages.items():
+            thumb = pdata.get("thumbnail", {}).get("source", "")
+            if thumb:
+                return thumb
+    except Exception:
+        pass
+
     return ""
+
+
+def generate_fallback_svg(topic: str) -> str:
+    """
+    Generate an offline, guaranteed high-quality SVG concept flowchart.
+    """
+    topic_clean = topic.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    return f"""<svg width="100%" height="auto" viewBox="0 0 800 450" xmlns="http://www.w3.org/2000/svg" style="font-family: system-ui, -apple-system, sans-serif;">
+  <defs>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F4F4F0"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-opacity="0.08"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#18181B"/>
+    </marker>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#FAF9F6" rx="16"/>
+  <rect x="2" y="2" width="796" height="446" fill="none" stroke="#E4E4E7" stroke-width="1.5" rx="15"/>
+
+  <!-- Header -->
+  <text x="400" y="52" text-anchor="middle" font-size="20" font-weight="700" fill="#18181B">Concept Architecture: {topic_clean}</text>
+  <text x="400" y="76" text-anchor="middle" font-size="12" fill="#71717A">Academic Concept Structure and Workflow</text>
+
+  <!-- Step 1: Input / Origin -->
+  <g filter="url(#shadow)">
+    <rect x="60" y="140" width="180" height="180" rx="14" fill="url(#cardGrad)" stroke="#D4D4D8" stroke-width="1.5"/>
+    <rect x="75" y="155" width="36" height="24" rx="6" fill="#18181B"/>
+    <text x="93" y="171" text-anchor="middle" font-size="11" font-weight="700" fill="#FFFFFF">01</text>
+    <text x="75" y="210" font-size="16" font-weight="700" fill="#18181B">Foundations</text>
+    <text x="75" y="235" font-size="12" fill="#52525B">Core principles &amp;</text>
+    <text x="75" y="252" font-size="12" fill="#52525B">fundamental axioms</text>
+    <text x="75" y="270" font-size="12" fill="#52525B">governing {topic_clean}</text>
+  </g>
+
+  <!-- Arrow 1 -> 2 -->
+  <line x1="240" y1="230" x2="305" y2="230" stroke="#18181B" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Step 2: Core Mechanism -->
+  <g filter="url(#shadow)">
+    <rect x="310" y="125" width="180" height="210" rx="14" fill="#18181B" stroke="#000000" stroke-width="1.5"/>
+    <rect x="325" y="140" width="36" height="24" rx="6" fill="#FFFFFF"/>
+    <text x="343" y="156" text-anchor="middle" font-size="11" font-weight="700" fill="#18181B">02</text>
+    <text x="325" y="195" font-size="16" font-weight="700" fill="#FFFFFF">Mechanism</text>
+    <text x="325" y="220" font-size="12" fill="#D4D4D8">Primary transformations,</text>
+    <text x="325" y="237" font-size="12" fill="#D4D4D8">interactions &amp; functional</text>
+    <text x="325" y="254" font-size="12" fill="#D4D4D8">processes in motion</text>
+    <rect x="325" y="280" width="150" height="26" rx="6" fill="#27272A"/>
+    <text x="400" y="297" text-anchor="middle" font-size="11" font-weight="600" fill="#A1A1AA">Central Hub</text>
+  </g>
+
+  <!-- Arrow 2 -> 3 -->
+  <line x1="490" y1="230" x2="555" y2="230" stroke="#18181B" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Step 3: Outcomes -->
+  <g filter="url(#shadow)">
+    <rect x="560" y="140" width="180" height="180" rx="14" fill="url(#cardGrad)" stroke="#D4D4D8" stroke-width="1.5"/>
+    <rect x="575" y="155" width="36" height="24" rx="6" fill="#18181B"/>
+    <text x="593" y="171" text-anchor="middle" font-size="11" font-weight="700" fill="#FFFFFF">03</text>
+    <text x="575" y="210" font-size="16" font-weight="700" fill="#18181B">Synthesis</text>
+    <text x="575" y="235" font-size="12" fill="#52525B">Resulting products,</text>
+    <text x="575" y="252" font-size="12" fill="#52525B">applications &amp;</text>
+    <text x="575" y="270" font-size="12" fill="#52525B">practical outcomes</text>
+  </g>
+
+  <!-- Footer note -->
+  <rect x="250" y="390" width="300" height="30" rx="15" fill="#E4E4E7"/>
+  <text x="400" y="410" text-anchor="middle" font-size="11" font-weight="600" fill="#3F3F46">StudyForge AI Vector Infographic</text>
+</svg>"""
+
+
+def generate_ai_diagram_svg(topic: str, context: str = "") -> str:
+    """
+    Generate a clean, modern, responsive SVG infographic diagram for an academic topic using Groq.
+    Returns valid <svg> markup or fallback SVG.
+    """
+    try:
+        ctx = f" Context notes: {context[:300]}" if context else ""
+        prompt = f"""You are an expert scientific and educational diagram illustrator.
+Create a clean, visually informative SVG concept diagram/flowchart for the academic topic: "{topic}".{ctx}
+
+Requirements:
+1. Output ONLY a valid <svg ...>...</svg> element. Do NOT wrap in markdown code blocks (no ```xml or ```svg). Do not include any conversational text.
+2. The SVG MUST have: width="100%" height="auto" viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg"
+3. Style: Clean academic editorial infographic. Use an off-white/cream background (#FBFBFA) or dark card background (#18181B) with rounded borders (rx="12").
+4. Diagram structure: 4 to 6 connected concept cards/boxes with titles, brief explanations (font-size 11-13px), clear arrow connectors (<path> or <line> with marker-end), and distinct visual grouping.
+5. Fonts: sans-serif or system-ui, high contrast, clean typography.
+6. Absolutely NO emojis anywhere.
+7. Return ONLY the complete SVG markup starting with <svg and ending with </svg>."""
+        res = call_groq(prompt)
+        if res.get("success") and res.get("content"):
+            content = res["content"].strip()
+            match = re.search(r"<svg[\s\S]*?</svg>", content, re.IGNORECASE)
+            if match:
+                return match.group(0)
+    except Exception as e:
+        print(f"Groq SVG generator error: {e}")
+    
+    return generate_fallback_svg(topic)
+
+
+@generate_bp.route("/diagram/generate", methods=["POST"])
+def generate_diagram():
+    """
+    POST /api/diagram/generate
+    Accepts JSON: { "topic": str, "notes": str (optional) }
+    Returns AI-generated SVG diagram code.
+    """
+    try:
+        data = request.get_json(force=True)
+    except Exception:
+        data = {}
+    topic = data.get("topic", "").strip() or "Academic Concept"
+    notes = data.get("notes", "").strip()
+    
+    svg = generate_ai_diagram_svg(topic, notes)
+    if not svg:
+        svg = generate_fallback_svg(topic)
+        
+    return jsonify({
+        "success": True,
+        "svg": svg,
+        "topic": topic
+    })
 
 
 @generate_bp.route("/generate", methods=["POST"])
@@ -42,7 +191,7 @@ def generate_study_pack():
     """
     POST /api/generate
     Accepts JSON or multipart form data.
-    Returns AI-generated study pack content.
+    Returns AI-generated study pack content with AI SVG diagram and Wikipedia imagery.
     """
     # ── Determine input type ──────────────────────────────────────────
     subject = ""
@@ -132,7 +281,7 @@ def generate_study_pack():
     if not result["success"]:
         return jsonify({"error": f"AI generation failed: {result['error']}"}), 502
 
-    # Educational visual concept diagram — Wikipedia first, Pollinations fallback
+    # Educational visual concept diagram & imagery
     topic_name = subject
     if not topic_name:
         for line in result["content"].split("\n"):
@@ -143,14 +292,13 @@ def generate_study_pack():
     if not topic_name:
         topic_name = notes[:40].split("\n")[0].strip() or "Academic Concept"
 
-    # 1. Try Wikipedia (free, reliable, no rate limit)
+    # 1. Fetch Wikimedia authentic educational image
     image_url = get_wikipedia_image(topic_name)
 
-    # 2. Fallback to Pollinations default (sana/fast model, no flux)
-    if not image_url:
-        clean_prompt = f"clean educational textbook diagram of {topic_name}, academic illustration style, clear labels"
-        encoded_query = urllib.parse.quote(clean_prompt)
-        image_url = f"https://image.pollinations.ai/prompt/{encoded_query}?width=800&height=576&nologo=true"
+    # 2. Generate Groq AI SVG diagram
+    diagram_svg = generate_ai_diagram_svg(topic_name, notes[:300])
+    if not diagram_svg:
+        diagram_svg = generate_fallback_svg(topic_name)
 
     return jsonify({
         "success": True,
@@ -160,6 +308,7 @@ def generate_study_pack():
         "difficulty": difficulty,
         "subject": subject or topic_name,
         "image_url": image_url,
+        "diagram_svg": diagram_svg,
         "image_topic": topic_name,
         "mcq_count": mcq_count,
         "saq_count": saq_count,
