@@ -420,9 +420,21 @@ async function executeStudyPackGeneration() {
         prompt_version: appState.promptVersion,
         difficulty: appState.difficulty,
         subject: subjectVal || 'General Lecture',
+        image_topic: subjectVal || 'General Lecture',
         mcq_count: mcqCountVal,
         saq_count: saqCountVal
       };
+      
+      // Fetch Wikipedia image for streamed results (no image_url from SSE)
+      try {
+        const wikiSlug = encodeURIComponent(subjectVal || 'General Lecture');
+        const wikiRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${wikiSlug}`);
+        if (wikiRes.ok) {
+          const wikiData = await wikiRes.json();
+          const src = (wikiData.originalimage || wikiData.thumbnail || {}).source || '';
+          if (src) finalData.image_url = src.replace(/\/\d+px-/, '/800px-');
+        }
+      } catch (e) { /* silent: will fallback inside renderParsedResults */ }
       
       appState.lastResult = finalData;
       appState.currentNotes = notesText;
@@ -521,15 +533,27 @@ function renderParsedResults(data) {
     });
   }
 
-  // 5. Visual Diagram (Dedicated Tab)
+  // 5. Visual Diagram (Dedicated Tab only — no full-width banner)
   const tabDiagramImg = document.getElementById('res-tab-diagram-img');
   const tabDiagramHeading = document.getElementById('res-tab-diagram-heading');
+  const tabDiagramError = document.getElementById('res-tab-diagram-error');
 
   const topic = data.subject || data.image_topic || 'Academic Concept';
-  const encoded = encodeURIComponent(`clean educational textbook diagram and scientific infographic of ${topic}, academic vector illustration style, clear labels, high quality`);
-  const finalImgUrl = data.image_url || `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=576&nologo=true`;
+
+  // Use Wikipedia image URL from backend, or build Pollinations fallback
+  const encoded = encodeURIComponent(`clean educational diagram of ${topic}, textbook illustration style`);
+  const finalImgUrl = data.image_url ||
+    `https://image.pollinations.ai/prompt/${encoded}?width=800&height=576&nologo=true`;
 
   if (tabDiagramImg) {
+    if (tabDiagramError) tabDiagramError.style.display = 'none';
+    tabDiagramImg.style.display = 'block';
+    tabDiagramImg.onload = () => { tabDiagramImg.style.opacity = '1'; };
+    tabDiagramImg.onerror = () => {
+      tabDiagramImg.style.display = 'none';
+      if (tabDiagramError) tabDiagramError.style.display = 'block';
+    };
+    tabDiagramImg.style.opacity = '0.5';
     tabDiagramImg.src = finalImgUrl;
     if (tabDiagramHeading) tabDiagramHeading.textContent = `Concept Diagram: ${topic}`;
   }
@@ -540,15 +564,22 @@ function renderParsedResults(data) {
 
 function regenerateVisualDiagram() {
   const tabDiagramImg = document.getElementById('res-tab-diagram-img');
+  const tabDiagramError = document.getElementById('res-tab-diagram-error');
   const topic = appState.subject || appState.lastResult?.subject || 'Academic Concept';
   const seed = Math.floor(Math.random() * 1000000);
-  const encoded = encodeURIComponent(`clean educational textbook diagram and scientific infographic of ${topic}, academic vector illustration style, clear labels, high quality`);
-  const newUrl = `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=576&nologo=true&seed=${seed}`;
+  const encoded = encodeURIComponent(`clean educational diagram of ${topic}, textbook illustration style`);
+  const newUrl = `https://image.pollinations.ai/prompt/${encoded}?width=800&height=576&nologo=true&seed=${seed}`;
 
   if (tabDiagramImg) {
+    if (tabDiagramError) tabDiagramError.style.display = 'none';
+    tabDiagramImg.style.display = 'block';
     tabDiagramImg.style.opacity = '0.5';
     tabDiagramImg.src = newUrl;
     tabDiagramImg.onload = () => { tabDiagramImg.style.opacity = '1'; };
+    tabDiagramImg.onerror = () => {
+      tabDiagramImg.style.display = 'none';
+      if (tabDiagramError) tabDiagramError.style.display = 'block';
+    };
   }
   showNotificationToast("New diagram requested!");
 }
@@ -574,10 +605,19 @@ function parseStudyPackContent(text) {
     result.concepts = conMatch[1].trim().split('\n').filter(l => l.trim().startsWith('-') || l.trim().startsWith('*'));
   }
 
-  // Extract Definitions
+  // Extract Definitions — handle bullet (-/*), numbered (1.), or plain **Term**: lines
   const defMatch = text.match(/##\s*📖\s*Definitions([\s\S]*?)(?=##|$)/i);
   if (defMatch) {
-    result.definitions = defMatch[1].trim().split('\n').filter(l => l.trim().startsWith('-') || l.trim().startsWith('*'));
+    result.definitions = defMatch[1].trim().split('\n').filter(l => {
+      const t = l.trim();
+      if (!t || t.length < 3) return false;
+      return (
+        t.startsWith('-') ||
+        t.startsWith('*') ||
+        /^\d+\./.test(t) ||
+        /^\*{0,2}[A-Z][\w\s()/-]+\*{0,2}:/.test(t)   // "Term: ..." or "**Term**: ..."
+      );
+    }).map(l => l.trim());
   }
 
   // Extract MCQs (Stateful parser: handles Q1., **Q1.**, Question 1:, 1., **1.**, etc.)

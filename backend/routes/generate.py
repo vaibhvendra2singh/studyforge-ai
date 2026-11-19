@@ -4,12 +4,37 @@ Generate route — handles study pack generation from lecture notes
 
 import json
 import urllib.parse
+import urllib.request
+import re
 from flask import Blueprint, request, jsonify
 from utils.groq_client import PROMPT_VERSIONS, call_groq
 from utils.validators import validate_notes, validate_difficulty, validate_prompt_version, sanitize_notes
 from utils.pdf_parser import extract_text_from_pdf
 
 generate_bp = Blueprint("generate", __name__)
+
+
+def get_wikipedia_image(topic: str) -> str:
+    """
+    Fetch a topic-related image from Wikipedia's REST API.
+    Returns image URL string or empty string on failure.
+    """
+    try:
+        slug = urllib.parse.quote(topic.strip(), safe='')
+        url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{slug}"
+        req = urllib.request.Request(url, headers={"User-Agent": "StudyForgeAI/1.0 (educational tool)"})
+        with urllib.request.urlopen(req, timeout=4) as resp:
+            data = json.loads(resp.read().decode())
+        # Try original image first (larger), then thumbnail
+        for key in ("originalimage", "thumbnail"):
+            src = data.get(key, {}).get("source", "")
+            if src:
+                # Upscale thumb to 800px wide
+                src = re.sub(r"/\d+px-", "/800px-", src)
+                return src
+    except Exception:
+        pass
+    return ""
 
 
 @generate_bp.route("/generate", methods=["POST"])
@@ -107,7 +132,7 @@ def generate_study_pack():
     if not result["success"]:
         return jsonify({"error": f"AI generation failed: {result['error']}"}), 502
 
-    # Educational visual concept diagram prompt
+    # Educational visual concept diagram — Wikipedia first, Pollinations fallback
     topic_name = subject
     if not topic_name:
         for line in result["content"].split("\n"):
@@ -118,9 +143,14 @@ def generate_study_pack():
     if not topic_name:
         topic_name = notes[:40].split("\n")[0].strip() or "Academic Concept"
 
-    clean_prompt = f"clean educational textbook diagram and scientific infographic of {topic_name}, academic vector illustration style, clear labels, high quality"
-    encoded_query = urllib.parse.quote(clean_prompt)
-    image_url = f"https://image.pollinations.ai/prompt/{encoded_query}?width=1024&height=576&nologo=true"
+    # 1. Try Wikipedia (free, reliable, no rate limit)
+    image_url = get_wikipedia_image(topic_name)
+
+    # 2. Fallback to Pollinations default (sana/fast model, no flux)
+    if not image_url:
+        clean_prompt = f"clean educational textbook diagram of {topic_name}, academic illustration style, clear labels"
+        encoded_query = urllib.parse.quote(clean_prompt)
+        image_url = f"https://image.pollinations.ai/prompt/{encoded_query}?width=800&height=576&nologo=true"
 
     return jsonify({
         "success": True,
