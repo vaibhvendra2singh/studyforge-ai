@@ -8,7 +8,7 @@ const appState = {
   currentView: 'dashboard',
   currentResultTab: 'overview',
   difficulty: 'Intermediate',
-  promptVersion: 'v2',
+  promptVersion: 'v3',
   inputMethod: 'text',
   selectedFile: null,
   currentNotes: '',
@@ -202,18 +202,25 @@ function switchInputMethod(mode) {
 function setDifficulty(diff) {
   appState.difficulty = diff;
   document.querySelectorAll('[id^="diff-btn-"]').forEach(btn => btn.classList.remove('active'));
-  document.getElementById(`diff-btn-${diff.toLowerCase()}`).classList.add('active');
-  document.getElementById('sum-difficulty').textContent = diff;
+  const btn = document.getElementById(`diff-btn-${diff.toLowerCase()}`);
+  if (btn) btn.classList.add('active');
+  const sumDiff = document.getElementById('sum-difficulty');
+  if (sumDiff) sumDiff.textContent = diff;
 }
 
 function setPromptVersion(ver) {
   appState.promptVersion = ver;
   document.querySelectorAll('[id^="ver-btn-"]').forEach(btn => btn.classList.remove('active'));
-  document.getElementById(`ver-btn-${ver}`).classList.add('active');
-  document.getElementById('prompt-desc-display').innerHTML = PROMPT_DESCRIPTIONS[ver];
+  const btn = document.getElementById(`ver-btn-${ver}`);
+  if (btn) btn.classList.add('active');
+  const pDesc = document.getElementById('prompt-desc-display');
+  if (pDesc && typeof PROMPT_DESCRIPTIONS !== 'undefined' && PROMPT_DESCRIPTIONS[ver]) {
+    pDesc.innerHTML = PROMPT_DESCRIPTIONS[ver];
+  }
   
   const names = { v1: 'Basic', v2: 'Strict Rules', v3: 'Smart Thinking' };
-  document.getElementById('sum-version').textContent = names[ver];
+  const sumVer = document.getElementById('sum-version');
+  if (sumVer) sumVer.textContent = names[ver];
 }
 
 function updateCharCounter() {
