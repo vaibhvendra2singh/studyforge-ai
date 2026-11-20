@@ -82,6 +82,10 @@ function playMechanicalTick(pitch = 1800, duration = 0.015) {
 
 // ── INITIALIZATION ────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+  }
+  window.scrollTo(0, 0);
   initLibraryStorage();
   initRouting();
   initDragDropZone();
@@ -279,9 +283,7 @@ function switchView(viewName, updateHash = true) {
   // Close mobile drawer if open
   closeMobileMenu();
 
-  if (window.scrollY > 80) {
-    window.scrollTo(0, 0);
-  }
+  window.scrollTo(0, 0);
 }
 
 // ── MOBILE MENU MANAGEMENT (SECTION 14) ───────────────────────────────────
