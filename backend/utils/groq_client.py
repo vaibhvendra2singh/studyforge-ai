@@ -196,7 +196,7 @@ PROMPT_VERSIONS = {
 # API CALL UTILITY
 # ─────────────────────────────────────────────
 
-def call_groq(prompt: str, temperature: float = 0.4, max_tokens: int = 2048) -> dict:
+def call_groq(prompt: str, temperature: float = 0.4, max_tokens: int = 4096) -> dict:
     """
     Call Groq API and return result dict with content or error.
     """
@@ -218,7 +218,7 @@ def call_groq(prompt: str, temperature: float = 0.4, max_tokens: int = 2048) -> 
         error_msg = str(e)
         return {"success": False, "error": error_msg}
 
-def call_groq_stream(prompt: str, temperature: float = 0.4, max_tokens: int = 2048):
+def call_groq_stream(prompt: str, temperature: float = 0.4, max_tokens: int = 4096):
     """
     Call Groq API and yield chunks for SSE streaming.
     """
