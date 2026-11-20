@@ -64,15 +64,20 @@ def compare_prompts():
 @prompt_lab_bp.route("/prompt-lab/prompts", methods=["GET"])
 def get_prompt_definitions():
     """
-    GET /api/prompt-lab/prompts
-    Returns the prompt templates (with a sample input) for review.
+    GET /api/prompt-lab/prompts?difficulty=Beginner
+    Returns the prompt templates for the selected difficulty level.
     """
+    difficulty = request.args.get("difficulty", "Intermediate")
+    if difficulty not in ["Beginner", "Intermediate", "Advanced"]:
+        difficulty = "Intermediate"
+
     sample = "[Your lecture notes will be inserted here]"
     output = {}
     for key, val in PROMPT_VERSIONS.items():
-        prompt_text = val["fn"](sample, "Intermediate")
+        prompt_text = val["fn"](sample, difficulty)
         output[key] = {
             "name": val["name"],
             "full_prompt": prompt_text,
+            "difficulty": difficulty
         }
     return jsonify(output)

@@ -128,10 +128,18 @@
 
       <!-- Shared Input Panel -->
       <div class="paper-card card-white" style="margin-bottom:2.25rem;">
-        <div class="card-header-editorial">
+        <div class="card-header-editorial" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
           <div class="card-title-group">
             <span></span>
             <h3>Your Notes</h3>
+          </div>
+          <div style="display:flex; align-items:center; gap:0.5rem;">
+            <span style="font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--muted);">Difficulty:</span>
+            <div class="segment-group" style="display:inline-flex;">
+              <button class="segment-btn" id="ldiff-beginner" onclick="setLabDifficulty('Beginner')">Beginner</button>
+              <button class="segment-btn active" id="ldiff-intermediate" onclick="setLabDifficulty('Intermediate')">Intermediate</button>
+              <button class="segment-btn" id="ldiff-advanced" onclick="setLabDifficulty('Advanced')">Advanced</button>
+            </div>
           </div>
         </div>
 
@@ -274,7 +282,7 @@
 
 <!-- Modal & Toast -->
 <div class="toast-msg" id="toast-notification"> Done</div>
-<script src="/static/js/main.js?v=15.0"></script>
+<script src="/static/js/main.js?v=16.0"></script>
 
 <script>
   let labDifficulty = 'Intermediate';
@@ -292,10 +300,31 @@
     });
   }
 
+  let currentInspectorVersion = v1;
+  let inspectorDifficulty = Intermediate;
+
   function setLabDifficulty(diff) {
     labDifficulty = diff;
     document.querySelectorAll('[id^="ldiff-"]').forEach(b => b.classList.remove('active'));
-    document.getElementById(`ldiff-${diff.toLowerCase()}`).classList.add('active');
+    const btn = document.getElementById(`ldiff-${diff.toLowerCase()}`);
+    if (btn) btn.classList.add('active');
+    changeInspectorDifficulty(diff);
+  }
+
+  async function changeInspectorDifficulty(diff) {
+    inspectorDifficulty = diff;
+    document.querySelectorAll('[id^="insp-diff-"]').forEach(b => b.classList.remove('active'));
+    const btn = document.getElementById(`insp-diff-${diff.toLowerCase()}`);
+    if (btn) btn.classList.add('active');
+    
+    // Fetch fresh prompt text for the selected difficulty level
+    try {
+      const res = await fetch(`/api/prompt-lab/prompts?difficulty=${diff}`);
+      labTemplates = await res.json();
+      showTemplate(currentInspectorVersion);
+    } catch (e) {
+      console.warn("Could not fetch prompt definitions:", e);
+    }
   }
 
   function setButtonsDisabled(disabled) {
@@ -628,6 +657,7 @@
   }
 
   function showTemplate(v) {
+    currentInspectorVersion = v;
     document.querySelectorAll('[id^="btn-insp-"]').forEach(b => b.classList.remove('active'));
     document.getElementById(`btn-insp-${v}`).classList.add('active');
     document.getElementById('raw-template-code').textContent = labTemplates[v]?.full_prompt || 'Loading...';
