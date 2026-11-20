@@ -55,7 +55,7 @@ const WHEEL_PIP_ANGLES = {
 
 // ── NATIVE WEB AUDIO API SYNTHESIZER (ZERO EXTERNAL ASSETS) ────────────────
 let mechanicalAudioCtx = null;
-function playMechanicalTick(pitch = 1800, duration = 0.015) {
+function playMechanicalTick(pitch = 1500, duration = 0.035) {
   try {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (!AudioContext) return;
@@ -65,16 +65,23 @@ function playMechanicalTick(pitch = 1800, duration = 0.015) {
     if (mechanicalAudioCtx.state === 'suspended') {
       mechanicalAudioCtx.resume();
     }
+    const now = mechanicalAudioCtx.currentTime;
     const osc = mechanicalAudioCtx.createOscillator();
     const gain = mechanicalAudioCtx.createGain();
+    
+    // Crisp tactile mechanical click: downward pitch drop for snap sound
     osc.type = 'triangle';
-    osc.frequency.setValueAtTime(pitch, mechanicalAudioCtx.currentTime);
-    gain.gain.setValueAtTime(0.045, mechanicalAudioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.0001, mechanicalAudioCtx.currentTime + duration);
+    osc.frequency.setValueAtTime(pitch, now);
+    osc.frequency.exponentialRampToValueAtTime(350, now + duration);
+    
+    // Punchy, loud, clear mechanical volume
+    gain.gain.setValueAtTime(0.38, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    
     osc.connect(gain);
     gain.connect(mechanicalAudioCtx.destination);
-    osc.start();
-    osc.stop(mechanicalAudioCtx.currentTime + duration);
+    osc.start(now);
+    osc.stop(now + duration);
   } catch (e) {
     // Silent fallback
   }
@@ -1719,7 +1726,6 @@ function initEventListeners() {
           disk.style.setProperty('--pip-angle', wb.angle);
           disk.classList.add('pip-active');
         }
-        playMechanicalTick(2400, 0.008);
       });
       el.addEventListener('mouseleave', () => {
         if (disk) {
@@ -1734,11 +1740,11 @@ function initEventListeners() {
   // Spotlight Command Palette Listeners
   initCommandPaletteListeners();
 
-  // Global tactile mechanical click audio feedback on all interactions
-  document.addEventListener('click', (e) => {
-    const interactive = e.target.closest('button, a, .clickable, .results-tab-btn, .pill-nav-item, .wheel-item, .wheel-hub-toggle, .paper-card, .radio-option, .difficulty-btn, .option-card, .mcq-option-btn, .speed-btn, .podcast-play-btn, .podcast-stop-btn, .palette-item, [role="button"], input[type="radio"], input[type="checkbox"], select, .tab-btn, .chip');
+  // Global tactile mechanical click audio feedback ONLY on click/press (NEVER on hover)
+  document.addEventListener('pointerdown', (e) => {
+    const interactive = e.target.closest('button, a, .clickable, .results-tab-btn, .pill-nav-item, .wheel-item, .wheel-hub-toggle, .paper-card, .radio-option, .difficulty-btn, .option-card, .mcq-option-btn, .speed-btn, .podcast-play-btn, .podcast-stop-btn, .palette-item, [role="button"], input[type="radio"], input[type="checkbox"], input[type="button"], input[type="submit"], select, .tab-btn, .chip');
     if (interactive) {
-      playMechanicalTick(1850, 0.012);
+      playMechanicalTick(1500, 0.035);
     }
   }, true);
 }
