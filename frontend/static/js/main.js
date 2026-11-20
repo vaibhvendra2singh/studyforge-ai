@@ -929,59 +929,36 @@ function generateStudyPackPdf(packData) {
   const difficulty = (packData.difficulty || 'Intermediate').toUpperCase();
   const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 
-  showNotificationToast("Generating PDF...");
+  showNotificationToast("Generating PDF document...");
 
-  // Modal overlay ensures visible on-screen coordinate space for html2canvas
-  const overlay = document.createElement('div');
-  overlay.id = 'studyforge-pdf-overlay';
-  overlay.style.position = 'fixed';
-  overlay.style.top = '0';
-  overlay.style.left = '0';
-  overlay.style.width = '100vw';
-  overlay.style.height = '100vh';
-  overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.65)';
-  overlay.style.backdropFilter = 'blur(4px)';
-  overlay.style.zIndex = '999999';
-  overlay.style.display = 'flex';
-  overlay.style.flexDirection = 'column';
-  overlay.style.alignItems = 'center';
-  overlay.style.justifyContent = 'flex-start';
-  overlay.style.overflowY = 'auto';
-  overlay.style.padding = '30px 15px';
-
-  const statusBadge = document.createElement('div');
-  statusBadge.style.background = '#18181B';
-  statusBadge.style.color = '#FFFFFF';
-  statusBadge.style.padding = '8px 22px';
-  statusBadge.style.borderRadius = '24px';
-  statusBadge.style.fontSize = '13px';
-  statusBadge.style.fontWeight = '600';
-  statusBadge.style.marginBottom = '15px';
-  statusBadge.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
-  statusBadge.textContent = 'Rendering PDF document, please wait...';
-  overlay.appendChild(statusBadge);
-
-  const wrapper = document.createElement('div');
-  wrapper.style.width = '780px';
-  wrapper.style.maxWidth = '100%';
-  wrapper.style.background = '#ffffff';
-  wrapper.style.color = '#111111';
-  wrapper.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif';
-  wrapper.style.padding = '36px 42px';
-  wrapper.style.borderRadius = '8px';
-  wrapper.style.boxShadow = '0 12px 36px rgba(0,0,0,0.25)';
-  wrapper.style.lineHeight = '1.6';
-  wrapper.style.fontSize = '13px';
+  // Create clean, un-offset, high-contrast DOM node for html2canvas
+  const renderBox = document.createElement('div');
+  renderBox.id = 'studyforge-pdf-render-box';
+  renderBox.style.position = 'fixed';
+  renderBox.style.top = '0';
+  renderBox.style.left = '0';
+  renderBox.style.width = '750px';
+  renderBox.style.zIndex = '9999999';
+  renderBox.style.background = '#ffffff';
+  renderBox.style.backgroundColor = '#ffffff';
+  renderBox.style.color = '#000000';
+  renderBox.style.fontFamily = 'Arial, Helvetica, sans-serif';
+  renderBox.style.padding = '32px 36px';
+  renderBox.style.boxSizing = 'border-box';
+  renderBox.style.margin = '0';
+  renderBox.style.opacity = '1';
+  renderBox.style.visibility = 'visible';
+  renderBox.style.pointerEvents = 'none';
 
   let html = `
-    <div style="border-bottom: 2px solid #111; padding-bottom: 14px; margin-bottom: 22px; display: flex; justify-content: space-between; align-items: flex-end;">
+    <div style="border-bottom: 2px solid #000000; padding-bottom: 14px; margin-bottom: 22px; display: flex; justify-content: space-between; align-items: flex-end; font-family: Arial, Helvetica, sans-serif;">
       <div>
-        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #555; margin-bottom: 4px;">STUDYFORGE AI - STUDY PACK</div>
-        <h1 style="margin: 0; font-size: 22px; font-weight: 800; color: #000; line-height: 1.2;">${escapeHtml(subject)}</h1>
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #444444; margin-bottom: 4px; font-family: Arial, Helvetica, sans-serif;">STUDYFORGE AI - STUDY PACK</div>
+        <h1 style="margin: 0; font-size: 22px; font-weight: 800; color: #000000; line-height: 1.2; font-family: Arial, Helvetica, sans-serif;">${escapeHtml(subject)}</h1>
       </div>
-      <div style="text-align: right;">
-        <span style="display: inline-block; padding: 4px 10px; background: #111; color: #fff; font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 1px;">${difficulty}</span>
-        <div style="font-size: 11px; color: #666; margin-top: 4px;">${dateStr}</div>
+      <div style="text-align: right; font-family: Arial, Helvetica, sans-serif;">
+        <span style="display: inline-block; padding: 4px 10px; background: #000000; color: #ffffff; font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 1px; font-family: Arial, Helvetica, sans-serif;">${difficulty}</span>
+        <div style="font-size: 11px; color: #555555; margin-top: 4px; font-family: Arial, Helvetica, sans-serif;">${dateStr}</div>
       </div>
     </div>
   `;
@@ -990,9 +967,9 @@ function generateStudyPackPdf(packData) {
   const diagramSvg = packData.diagram_svg || (document.querySelector('#res-diagram-svg-target svg')?.outerHTML);
   if (diagramSvg) {
     html += `
-      <div style="margin-bottom: 22px; page-break-inside: avoid;">
-        <h2 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #000; border-bottom: 1px solid #e0e0e0; padding-bottom: 4px; margin-bottom: 10px;">Visual Concept Diagram</h2>
-        <div style="width: 100%; border: 1px solid #e5e5e5; border-radius: 6px; overflow: hidden; background: #fafafa; padding: 10px; text-align: center;">
+      <div style="margin-bottom: 22px; page-break-inside: avoid; font-family: Arial, Helvetica, sans-serif;">
+        <h2 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #000000; border-bottom: 1px solid #d0d0d0; padding-bottom: 4px; margin-bottom: 10px; font-family: Arial, Helvetica, sans-serif;">Visual Concept Diagram</h2>
+        <div style="width: 100%; border: 1px solid #e0e0e0; border-radius: 6px; overflow: hidden; background: #fafafa; padding: 10px; text-align: center;">
           ${diagramSvg}
         </div>
       </div>
@@ -1004,9 +981,9 @@ function generateStudyPackPdf(packData) {
   if (parsed.summary) {
     hasSections = true;
     html += `
-      <div style="margin-bottom: 22px; page-break-inside: avoid;">
-        <h2 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #000; border-bottom: 1px solid #e0e0e0; padding-bottom: 4px; margin-bottom: 8px;">Summary</h2>
-        <div style="background: #f9f9f9; border-left: 3px solid #111; padding: 10px 14px; font-size: 12.5px; line-height: 1.7; color: #222;">
+      <div style="margin-bottom: 22px; page-break-inside: avoid; font-family: Arial, Helvetica, sans-serif;">
+        <h2 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #000000; border-bottom: 1px solid #d0d0d0; padding-bottom: 4px; margin-bottom: 8px; font-family: Arial, Helvetica, sans-serif;">Summary</h2>
+        <div style="background: #f7f7f7; border-left: 4px solid #000000; padding: 12px 16px; font-size: 13px; line-height: 1.7; color: #000000; font-family: Arial, Helvetica, sans-serif;">
           ${marked.parse(parsed.summary)}
         </div>
       </div>
@@ -1016,10 +993,10 @@ function generateStudyPackPdf(packData) {
   if (parsed.concepts && parsed.concepts.length > 0) {
     hasSections = true;
     html += `
-      <div style="margin-bottom: 22px; page-break-inside: avoid;">
-        <h2 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #000; border-bottom: 1px solid #e0e0e0; padding-bottom: 4px; margin-bottom: 8px;">Key Concepts</h2>
-        <ul style="margin: 0; padding-left: 20px; line-height: 1.75;">
-          ${parsed.concepts.map(c => `<li style="margin-bottom: 5px;">${marked.parseInline(c.replace(/^[-*]\s*/, ''))}</li>`).join('')}
+      <div style="margin-bottom: 22px; page-break-inside: avoid; font-family: Arial, Helvetica, sans-serif;">
+        <h2 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #000000; border-bottom: 1px solid #d0d0d0; padding-bottom: 4px; margin-bottom: 8px; font-family: Arial, Helvetica, sans-serif;">Key Concepts</h2>
+        <ul style="margin: 0; padding-left: 20px; line-height: 1.75; font-family: Arial, Helvetica, sans-serif;">
+          ${parsed.concepts.map(c => `<li style="margin-bottom: 6px; font-size: 13px; color: #000000; font-family: Arial, Helvetica, sans-serif;">${marked.parseInline(c.replace(/^[-*]\s*/, ''))}</li>`).join('')}
         </ul>
       </div>
     `;
@@ -1028,11 +1005,11 @@ function generateStudyPackPdf(packData) {
   if (parsed.definitions && parsed.definitions.length > 0) {
     hasSections = true;
     html += `
-      <div style="margin-bottom: 22px; page-break-inside: avoid;">
-        <h2 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #000; border-bottom: 1px solid #e0e0e0; padding-bottom: 4px; margin-bottom: 8px;">Definitions</h2>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+      <div style="margin-bottom: 22px; page-break-inside: avoid; font-family: Arial, Helvetica, sans-serif;">
+        <h2 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #000000; border-bottom: 1px solid #d0d0d0; padding-bottom: 4px; margin-bottom: 8px; font-family: Arial, Helvetica, sans-serif;">Definitions</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-family: Arial, Helvetica, sans-serif;">
           ${parsed.definitions.map(d => `
-            <div style="background: #fafafa; border: 1px solid #e8e8e8; border-radius: 4px; padding: 8px 10px; font-size: 12px; line-height: 1.5;">
+            <div style="background: #f9f9f9; border: 1px solid #e2e2e2; border-radius: 4px; padding: 8px 10px; font-size: 12px; line-height: 1.5; color: #000000; font-family: Arial, Helvetica, sans-serif;">
               ${marked.parseInline(d.replace(/^[-*]|\d+\.\s*/, ''))}
             </div>
           `).join('')}
@@ -1044,19 +1021,19 @@ function generateStudyPackPdf(packData) {
   if (parsed.mcqs && parsed.mcqs.length > 0) {
     hasSections = true;
     html += `
-      <div style="margin-bottom: 22px;">
-        <h2 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #000; border-bottom: 1px solid #e0e0e0; padding-bottom: 4px; margin-bottom: 10px;">Practice Quiz</h2>
+      <div style="margin-bottom: 22px; font-family: Arial, Helvetica, sans-serif;">
+        <h2 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #000000; border-bottom: 1px solid #d0d0d0; padding-bottom: 4px; margin-bottom: 10px; font-family: Arial, Helvetica, sans-serif;">Practice Quiz</h2>
         ${parsed.mcqs.map((mcq, idx) => `
-          <div style="margin-bottom: 12px; padding: 10px 12px; border: 1px solid #e2e2e2; border-radius: 5px; background: #ffffff; page-break-inside: avoid;">
-            <div style="font-weight: 700; font-size: 12.5px; margin-bottom: 6px;">Q${idx + 1}. ${escapeHtml(mcq.question)}</div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 8px;">
+          <div style="margin-bottom: 12px; padding: 10px 12px; border: 1px solid #d8d8d8; border-radius: 5px; background: #ffffff; page-break-inside: avoid; font-family: Arial, Helvetica, sans-serif;">
+            <div style="font-weight: 700; font-size: 12.5px; margin-bottom: 6px; color: #000000; font-family: Arial, Helvetica, sans-serif;">Q${idx + 1}. ${escapeHtml(mcq.question)}</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 8px; font-family: Arial, Helvetica, sans-serif;">
               ${mcq.options.map((opt, i) => {
                 const letter = String.fromCharCode(65 + i);
                 const clean = opt.replace(/^[A-D][\).:\s-]+/i, '').replace(/[\u2705\u2714\u2713\u2611\[x\]]/gi, '').trim();
-                return `<div style="padding: 5px 8px; background: #f4f4f4; border-radius: 4px; font-size: 11.5px;"><strong>${letter})</strong> ${escapeHtml(clean)}</div>`;
+                return `<div style="padding: 5px 8px; background: #f2f2f2; border-radius: 4px; font-size: 11.5px; color: #000000; font-family: Arial, Helvetica, sans-serif;"><strong>${letter})</strong> ${escapeHtml(clean)}</div>`;
               }).join('')}
             </div>
-            <div style="font-size: 11px; color: #444; background: #fafafa; border-top: 1px dashed #ddd; padding: 5px 8px; margin-top: 4px;">
+            <div style="font-size: 11px; color: #222222; background: #f8f8f8; border-top: 1px dashed #cccccc; padding: 5px 8px; margin-top: 4px; font-family: Arial, Helvetica, sans-serif;">
               <strong>Answer:</strong> ${escapeHtml(mcq.correct)} ${mcq.explanation ? `&mdash; ${escapeHtml(mcq.explanation)}` : ''}
             </div>
           </div>
@@ -1068,12 +1045,12 @@ function generateStudyPackPdf(packData) {
   if (parsed.saqs && parsed.saqs.length > 0) {
     hasSections = true;
     html += `
-      <div style="margin-bottom: 22px;">
-        <h2 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #000; border-bottom: 1px solid #e0e0e0; padding-bottom: 4px; margin-bottom: 10px;">Short Answer Questions</h2>
+      <div style="margin-bottom: 22px; font-family: Arial, Helvetica, sans-serif;">
+        <h2 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #000000; border-bottom: 1px solid #d0d0d0; padding-bottom: 4px; margin-bottom: 10px; font-family: Arial, Helvetica, sans-serif;">Short Answer Questions</h2>
         ${parsed.saqs.map((saq, idx) => `
-          <div style="margin-bottom: 12px; padding: 10px 12px; border: 1px solid #e2e2e2; border-radius: 5px; background: #ffffff; page-break-inside: avoid;">
-            <div style="font-weight: 700; font-size: 12.5px; margin-bottom: 5px;">Q${idx + 1}. ${escapeHtml(saq.question)}</div>
-            <div style="font-size: 11.5px; color: #222; background: #f8f8f8; border-left: 2px solid #333; padding: 7px 10px; line-height: 1.6;">
+          <div style="margin-bottom: 12px; padding: 10px 12px; border: 1px solid #d8d8d8; border-radius: 5px; background: #ffffff; page-break-inside: avoid; font-family: Arial, Helvetica, sans-serif;">
+            <div style="font-weight: 700; font-size: 12.5px; margin-bottom: 5px; color: #000000; font-family: Arial, Helvetica, sans-serif;">Q${idx + 1}. ${escapeHtml(saq.question)}</div>
+            <div style="font-size: 11.5px; color: #000000; background: #f7f7f7; border-left: 3px solid #000000; padding: 7px 10px; line-height: 1.6; font-family: Arial, Helvetica, sans-serif;">
               <strong>Model Answer:</strong> ${escapeHtml(saq.answer)}
             </div>
           </div>
@@ -1085,21 +1062,20 @@ function generateStudyPackPdf(packData) {
   // Fallback: If no structured sections matched, render entire markdown content
   if (!hasSections) {
     html += `
-      <div style="margin-bottom: 22px; font-size: 13px; line-height: 1.7; color: #222;">
+      <div style="margin-bottom: 22px; font-size: 13px; line-height: 1.7; color: #000000; font-family: Arial, Helvetica, sans-serif;">
         ${marked.parse(content)}
       </div>
     `;
   }
 
   html += `
-    <div style="border-top: 1px solid #e0e0e0; padding-top: 10px; margin-top: 24px; font-size: 10px; color: #777; text-align: center;">
+    <div style="border-top: 1px solid #e0e0e0; padding-top: 10px; margin-top: 24px; font-size: 10px; color: #666666; text-align: center; font-family: Arial, Helvetica, sans-serif;">
       Generated by StudyForge AI - Comprehensive Academic Study Pack
     </div>
   `;
 
-  wrapper.innerHTML = html;
-  overlay.appendChild(wrapper);
-  document.body.appendChild(overlay);
+  renderBox.innerHTML = html;
+  document.body.appendChild(renderBox);
 
   const cleanTitle = (subject || 'StudyPack').replace(/[^a-zA-Z0-9_-]/g, '_');
   const filename = `StudyForge_${cleanTitle}_${difficulty}.pdf`;
@@ -1113,27 +1089,70 @@ function generateStudyPackPdf(packData) {
         scale: 2,
         useCORS: true,
         logging: false,
-        letterRendering: true,
+        letterRendering: false,
+        backgroundColor: '#ffffff',
         scrollX: 0,
         scrollY: 0,
-        windowWidth: 800
+        x: 0,
+        y: 0,
+        width: 750,
+        windowWidth: 750
       },
       jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
       pagebreak:    { mode: ['css', 'legacy'] }
     };
-    html2pdf().set(opt).from(wrapper).save().then(() => {
-      if (document.body.contains(overlay)) document.body.removeChild(overlay);
+
+    html2pdf().set(opt).from(renderBox).save().then(() => {
+      if (document.body.contains(renderBox)) document.body.removeChild(renderBox);
       showNotificationToast("PDF downloaded successfully!");
     }).catch(err => {
-      console.error("PDF export error", err);
-      if (document.body.contains(overlay)) document.body.removeChild(overlay);
-      showNotificationToast("Exporting via browser print...");
-      window.print();
+      console.error("PDF export error:", err);
+      if (document.body.contains(renderBox)) document.body.removeChild(renderBox);
+      fallbackPrintPdf(html, filename);
     });
   } else {
-    if (document.body.contains(overlay)) document.body.removeChild(overlay);
-    window.print();
+    fallbackPrintPdf(html, filename);
+    if (document.body.contains(renderBox)) document.body.removeChild(renderBox);
   }
+}
+
+// Fallback high-fidelity browser print
+function fallbackPrintPdf(htmlContent, title) {
+  const printIframe = document.createElement('iframe');
+  printIframe.style.position = 'fixed';
+  printIframe.style.top = '-9999px';
+  printIframe.style.left = '-9999px';
+  printIframe.style.width = '100%';
+  printIframe.style.height = '100%';
+  document.body.appendChild(printIframe);
+
+  const doc = printIframe.contentWindow.document;
+  doc.open();
+  doc.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>${title}</title>
+        <style>
+          @page { size: A4; margin: 15mm; }
+          body { font-family: Arial, Helvetica, sans-serif; color: #000000; background: #ffffff; margin: 0; padding: 0; }
+          * { box-sizing: border-box; }
+        </style>
+      </head>
+      <body>
+        ${htmlContent}
+      </body>
+    </html>
+  `);
+  doc.close();
+
+  setTimeout(() => {
+    printIframe.contentWindow.focus();
+    printIframe.contentWindow.print();
+    setTimeout(() => {
+      if (document.body.contains(printIframe)) document.body.removeChild(printIframe);
+    }, 2000);
+  }, 500);
 }
 
 // ── MY STUDY PACKS (SAVED PACKS) ──────────────────────────────────────────
