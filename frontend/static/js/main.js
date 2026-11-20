@@ -44,6 +44,42 @@ const PROMPT_DESCRIPTIONS = {
   v3: '<strong>Smart Thinking:</strong> The AI takes its time to plan and think before writing the best study pack.'
 };
 
+// ── MECHANICAL WHEEL DIAL PIP MAPPINGS ────────────────────────────────────
+const WHEEL_PIP_ANGLES = {
+  dashboard: '-56deg',
+  generator: '-28deg',
+  lab: '0deg',
+  evaluation: '28deg',
+  library: '56deg'
+};
+
+// ── NATIVE WEB AUDIO API SYNTHESIZER (ZERO EXTERNAL ASSETS) ────────────────
+let mechanicalAudioCtx = null;
+function playMechanicalTick(pitch = 1800, duration = 0.015) {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    if (!mechanicalAudioCtx) {
+      mechanicalAudioCtx = new AudioContext();
+    }
+    if (mechanicalAudioCtx.state === 'suspended') {
+      mechanicalAudioCtx.resume();
+    }
+    const osc = mechanicalAudioCtx.createOscillator();
+    const gain = mechanicalAudioCtx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(pitch, mechanicalAudioCtx.currentTime);
+    gain.gain.setValueAtTime(0.045, mechanicalAudioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, mechanicalAudioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(mechanicalAudioCtx.destination);
+    osc.start();
+    osc.stop(mechanicalAudioCtx.currentTime + duration);
+  } catch (e) {
+    // Silent fallback
+  }
+}
+
 // ── INITIALIZATION ────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   initLibraryStorage();
@@ -189,6 +225,12 @@ function switchView(viewName, updateHash = true) {
   const activeWheel = document.getElementById(`wheel-nav-${viewName}`);
   if (activeWheel) {
     activeWheel.classList.add('active');
+  }
+
+  // Update mechanical wheel dial active glowing pip position
+  const wheelDisk = document.getElementById('wheel-disk');
+  if (wheelDisk && WHEEL_PIP_ANGLES[viewName]) {
+    wheelDisk.style.setProperty('--pip-angle', WHEEL_PIP_ANGLES[viewName]);
   }
 
   document.querySelectorAll('.pill-nav-item, .sidebar-nav-item').forEach(btn => {
@@ -1654,6 +1696,38 @@ function initEventListeners() {
       appContainer.style.paddingLeft = '';
     });
   }
+
+  // Wheel Dial Orbital Pip and Mechanical Tick Listeners
+  const wheelButtons = [
+    { id: 'wheel-nav-dashboard', angle: '-56deg' },
+    { id: 'wheel-nav-generator', angle: '-28deg' },
+    { id: 'wheel-nav-lab', angle: '0deg' },
+    { id: 'wheel-nav-evaluation', angle: '28deg' },
+    { id: 'wheel-nav-library', angle: '56deg' }
+  ];
+  const disk = document.getElementById('wheel-disk');
+  wheelButtons.forEach(wb => {
+    const el = document.getElementById(wb.id);
+    if (el) {
+      el.addEventListener('mouseenter', () => {
+        if (disk) {
+          disk.style.setProperty('--pip-angle', wb.angle);
+          disk.classList.add('pip-active');
+        }
+        playMechanicalTick(2400, 0.008);
+      });
+      el.addEventListener('mouseleave', () => {
+        if (disk) {
+          disk.classList.remove('pip-active');
+          const currentAngle = WHEEL_PIP_ANGLES[appState.currentView] || '-56deg';
+          disk.style.setProperty('--pip-angle', currentAngle);
+        }
+      });
+    }
+  });
+
+  // Spotlight Command Palette Listeners
+  initCommandPaletteListeners();
 }
 
 
@@ -1782,23 +1856,35 @@ document.addEventListener('keydown', (e) => {
 
 
 // ==========================================================================
-// FEATURE 2: AUDIO OVERVIEW / TEXT-TO-SPEECH (LECTURE BRIEFING)
+// FEATURE 2: AUDIO OVERVIEW / NOTEBOOKLM-STYLE WAVEFORM PLAYER
 // ==========================================================================
 const audioState = {
   isPlaying: false,
   isPaused: false,
   rate: 1.0,
-  utterance: null
+  utterance: null,
+  progressTimer: null,
+  elapsedSeconds: 0,
+  estimatedDuration: 60
 };
+
+function formatAudioTime(seconds) {
+  if (isNaN(seconds) || seconds < 0) return '0:00';
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
 
 function toggleAudioOverview() {
   const bar = document.getElementById('audio-player-bar');
   if (!bar) return;
   if (bar.style.display === 'none' || !bar.style.display) {
     bar.style.display = 'flex';
+    playMechanicalTick(1800, 0.015);
   } else {
     bar.style.display = 'none';
     stopAudio();
+    playMechanicalTick(1200, 0.015);
   }
 }
 
@@ -1808,22 +1894,34 @@ function playPauseAudio() {
     return;
   }
 
-  const playBtn = document.getElementById('btn-audio-play-pause');
+  const playIcon = document.getElementById('audio-play-icon');
+  const pauseIcon = document.getElementById('audio-pause-icon');
   const statusLabel = document.getElementById('audio-status-label');
+  const eq = document.getElementById('audio-eq');
 
+  // If already playing, pause it
   if (audioState.isPlaying && !audioState.isPaused) {
     window.speechSynthesis.pause();
     audioState.isPaused = true;
-    if (playBtn) playBtn.textContent = 'Resume';
+    if (audioState.progressTimer) clearInterval(audioState.progressTimer);
+    if (playIcon) playIcon.style.display = 'block';
+    if (pauseIcon) pauseIcon.style.display = 'none';
     if (statusLabel) statusLabel.textContent = 'Paused';
+    if (eq) eq.classList.remove('playing');
+    playMechanicalTick(1400, 0.012);
     return;
   }
 
+  // If paused, resume it
   if (audioState.isPaused) {
     window.speechSynthesis.resume();
     audioState.isPaused = false;
-    if (playBtn) playBtn.textContent = 'Pause';
-    if (statusLabel) statusLabel.textContent = 'Playing...';
+    if (playIcon) playIcon.style.display = 'none';
+    if (pauseIcon) pauseIcon.style.display = 'block';
+    if (statusLabel) statusLabel.textContent = 'Playing lecture audio...';
+    if (eq) eq.classList.add('playing');
+    startAudioProgressLoop();
+    playMechanicalTick(2000, 0.012);
     return;
   }
 
@@ -1840,6 +1938,18 @@ function playPauseAudio() {
     `Key Concepts: ${(parsed.concepts || []).map(c => c.replace(/^[-*]\s*/, '')).join('. ')}`
   ].join(' ');
 
+  // Estimate duration: ~140 words per min at 1.0x rate
+  const words = textToRead.split(/\s+/).filter(Boolean).length;
+  audioState.estimatedDuration = Math.max(10, Math.round((words / 140) * 60 / audioState.rate));
+  audioState.elapsedSeconds = 0;
+
+  const totalTimeEl = document.getElementById('audio-time-total');
+  if (totalTimeEl) totalTimeEl.textContent = formatAudioTime(audioState.estimatedDuration);
+  const elTime = document.getElementById('audio-time-elapsed');
+  if (elTime) elTime.textContent = '0:00';
+  const bar = document.getElementById('audio-progress-bar');
+  if (bar) bar.style.width = '0%';
+
   window.speechSynthesis.cancel();
   audioState.utterance = new SpeechSynthesisUtterance(textToRead);
   audioState.utterance.rate = audioState.rate;
@@ -1847,49 +1957,102 @@ function playPauseAudio() {
   audioState.utterance.onstart = () => {
     audioState.isPlaying = true;
     audioState.isPaused = false;
-    if (playBtn) playBtn.textContent = 'Pause';
+    if (playIcon) playIcon.style.display = 'none';
+    if (pauseIcon) pauseIcon.style.display = 'block';
     if (statusLabel) statusLabel.textContent = 'Playing lecture audio...';
+    if (eq) eq.classList.add('playing');
+    startAudioProgressLoop();
   };
 
   audioState.utterance.onend = () => {
-    audioState.isPlaying = false;
-    audioState.isPaused = false;
-    if (playBtn) playBtn.textContent = 'Play';
+    stopAudio();
     if (statusLabel) statusLabel.textContent = 'Finished';
   };
 
   audioState.utterance.onerror = () => {
-    audioState.isPlaying = false;
-    audioState.isPaused = false;
-    if (playBtn) playBtn.textContent = 'Play';
+    stopAudio();
     if (statusLabel) statusLabel.textContent = 'Audio stopped';
   };
 
+  playMechanicalTick(2000, 0.015);
   window.speechSynthesis.speak(audioState.utterance);
+}
+
+function startAudioProgressLoop() {
+  if (audioState.progressTimer) clearInterval(audioState.progressTimer);
+  audioState.progressTimer = setInterval(() => {
+    if (!audioState.isPlaying || audioState.isPaused) return;
+    audioState.elapsedSeconds += 0.25;
+    const pct = Math.min(100, (audioState.elapsedSeconds / audioState.estimatedDuration) * 100);
+    const bar = document.getElementById('audio-progress-bar');
+    if (bar) bar.style.width = pct + '%';
+    const elTime = document.getElementById('audio-time-elapsed');
+    if (elTime) elTime.textContent = formatAudioTime(Math.floor(audioState.elapsedSeconds));
+    if (pct >= 100) {
+      clearInterval(audioState.progressTimer);
+    }
+  }, 250);
 }
 
 function stopAudio() {
   if (window.speechSynthesis) {
     window.speechSynthesis.cancel();
   }
+  if (audioState.progressTimer) {
+    clearInterval(audioState.progressTimer);
+    audioState.progressTimer = null;
+  }
   audioState.isPlaying = false;
   audioState.isPaused = false;
-  const playBtn = document.getElementById('btn-audio-play-pause');
+  audioState.elapsedSeconds = 0;
+
+  const playIcon = document.getElementById('audio-play-icon');
+  const pauseIcon = document.getElementById('audio-pause-icon');
   const statusLabel = document.getElementById('audio-status-label');
-  if (playBtn) playBtn.textContent = 'Play';
-  if (statusLabel) statusLabel.textContent = 'Stopped';
+  const eq = document.getElementById('audio-eq');
+  const bar = document.getElementById('audio-progress-bar');
+  const elTime = document.getElementById('audio-time-elapsed');
+
+  if (playIcon) playIcon.style.display = 'block';
+  if (pauseIcon) pauseIcon.style.display = 'none';
+  if (statusLabel) statusLabel.textContent = 'Ready to play';
+  if (eq) eq.classList.remove('playing');
+  if (bar) bar.style.width = '0%';
+  if (elTime) elTime.textContent = '0:00';
+  playMechanicalTick(1100, 0.015);
 }
 
 function setAudioSpeed(speed) {
   audioState.rate = speed;
-  ['1', '15', '2'].forEach(s => {
-    const b = document.getElementById(`btn-speed-${s}`);
-    if (b) b.style.fontWeight = (speed === (s === '15' ? 1.5 : (s === '1' ? 1.0 : 2.0))) ? '800' : '400';
+  const speeds = [
+    { id: 'btn-speed-1', val: 1.0 },
+    { id: 'btn-speed-125', val: 1.25 },
+    { id: 'btn-speed-15', val: 1.5 },
+    { id: 'btn-speed-2', val: 2.0 }
+  ];
+  speeds.forEach(s => {
+    const el = document.getElementById(s.id);
+    if (el) el.classList.toggle('active', Math.abs(speed - s.val) < 0.05);
   });
-  if (audioState.isPlaying) {
+  playMechanicalTick(2200, 0.01);
+  if (audioState.isPlaying && !audioState.isPaused) {
     stopAudio();
     playPauseAudio();
   }
+}
+
+function seekAudioFromClick(event) {
+  const track = event.currentTarget;
+  if (!track || !audioState.estimatedDuration) return;
+  const rect = track.getBoundingClientRect();
+  const clickX = event.clientX - rect.left;
+  const pct = Math.max(0, Math.min(1, clickX / rect.width));
+  audioState.elapsedSeconds = audioState.estimatedDuration * pct;
+  const bar = document.getElementById('audio-progress-bar');
+  if (bar) bar.style.width = (pct * 100) + '%';
+  const elTime = document.getElementById('audio-time-elapsed');
+  if (elTime) elTime.textContent = formatAudioTime(Math.floor(audioState.elapsedSeconds));
+  playMechanicalTick(2400, 0.008);
 }
 
 
@@ -2078,6 +2241,7 @@ async function submitAskAiQuestion() {
 // SEMI-CIRCLE ROTATING WHEEL NAVIGATION CONTROLLER
 // ==========================================================================
 function toggleWheelNav() {
+  playMechanicalTick(1500, 0.02);
   const container = document.getElementById('wheel-nav');
   if (container) {
     const isOpen = container.classList.toggle('open');
@@ -2103,3 +2267,358 @@ document.addEventListener('click', (e) => {
     }
   }
 });
+
+
+// ==========================================================================
+// FEATURE 3: SPOTLIGHT COMMAND PALETTE (CMD + K / LINEAR & RAYCAST STYLE)
+// ==========================================================================
+const COMMAND_PALETTE_ITEMS = [
+  // Navigation
+  {
+    id: 'nav-dashboard',
+    title: 'Go to Home / Overview',
+    subtitle: 'Dashboard metrics, quick-start guide, and recent activity',
+    category: 'Navigation',
+    badge: 'View',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
+    action: () => switchView('dashboard')
+  },
+  {
+    id: 'nav-generator',
+    title: 'Study Pack Preparation',
+    subtitle: 'Paste lecture notes or upload PDF/TXT documents',
+    category: 'Navigation',
+    badge: 'View',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+    action: () => switchView('generator')
+  },
+  {
+    id: 'nav-lab',
+    title: 'Prompt Comparison Lab',
+    subtitle: 'Benchmark Basic vs Strict Rules vs Smart Thinking prompts',
+    category: 'Navigation',
+    badge: 'View',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2v7.31L4.36 17.5A2 2 0 0 0 6 20.5h12a2 2 0 0 0 1.64-3L14 9.31V2"/></svg>',
+    action: () => switchView('lab')
+  },
+  {
+    id: 'nav-evaluation',
+    title: 'Evaluation & Analytics',
+    subtitle: 'Compare accuracy, cost, latency, and rubric ratings',
+    category: 'Navigation',
+    badge: 'View',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
+    action: () => switchView('evaluation')
+  },
+  {
+    id: 'nav-library',
+    title: 'Saved Study Packs',
+    subtitle: 'Browse your offline saved notes, quizzes, and exports',
+    category: 'Navigation',
+    badge: 'View',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+    action: () => switchView('library')
+  },
+  // Actions
+  {
+    id: 'act-export-pdf',
+    title: 'Export Active Pack to PDF',
+    subtitle: 'Download high-res printable PDF with cover and answer keys',
+    category: 'Actions',
+    badge: 'Export',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
+    action: () => downloadCurrentPdf()
+  },
+  {
+    id: 'act-audio',
+    title: 'Listen to Audio Briefing',
+    subtitle: 'NotebookLM speech synthesizer with live bouncing equalizer',
+    category: 'Actions',
+    badge: 'Audio',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>',
+    action: () => {
+      const bar = document.getElementById('audio-player-bar');
+      if (bar) bar.style.display = 'flex';
+      playPauseAudio();
+    }
+  },
+  {
+    id: 'act-quiz-15',
+    title: 'Start 15-Minute Timed Quiz',
+    subtitle: 'Simulate exam conditions with live countdown and instant grading',
+    category: 'Actions',
+    badge: 'Quiz',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+    action: () => {
+      if (!appState.lastResult?.content) {
+        switchView('generator');
+        showNotificationToast("Please generate or select a study pack first to start a quiz.");
+      } else {
+        switchView('results');
+        switchResultTab('mcqs');
+        startTimedQuiz(15);
+      }
+    }
+  },
+  {
+    id: 'act-flashcards',
+    title: 'Practice Interactive Flashcards',
+    subtitle: 'Flip key concept terms and master definitions',
+    category: 'Actions',
+    badge: 'Study',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>',
+    action: () => {
+      if (!appState.lastResult?.content) {
+        switchView('generator');
+        showNotificationToast("Please generate a study pack first for flashcards.");
+      } else {
+        switchView('results');
+        switchResultTab('flashcards');
+      }
+    }
+  },
+  {
+    id: 'act-ask-ai',
+    title: 'Ask AI Assistant',
+    subtitle: 'Open the slide-over AI tutor grounded strictly in your notes',
+    category: 'Actions',
+    badge: 'AI',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+    action: () => toggleAskAiDrawer()
+  },
+  {
+    id: 'act-copy-summary',
+    title: 'Copy Study Pack to Clipboard',
+    subtitle: 'Quickly copy the active notes and questions',
+    category: 'Actions',
+    badge: 'Copy',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+    action: () => copyCurrentOutput()
+  },
+  // Preferences
+  {
+    id: 'set-theme',
+    title: 'Toggle Dark / Light Paper Mode',
+    subtitle: 'Switch between warm parchment and architectural dark theme',
+    category: 'Preferences',
+    badge: 'Theme',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>',
+    action: () => toggleTheme()
+  },
+  {
+    id: 'set-diff-beg',
+    title: 'Set Difficulty: Beginner',
+    subtitle: 'Introductory level questions with foundational terms',
+    category: 'Preferences',
+    badge: 'Setting',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+    action: () => {
+      document.querySelectorAll('#difficulty-selector .difficulty-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.difficulty === 'beginner');
+      });
+      appState.difficulty = 'Beginner';
+      showNotificationToast('Difficulty set to Beginner');
+    }
+  },
+  {
+    id: 'set-diff-int',
+    title: 'Set Difficulty: Intermediate',
+    subtitle: 'Balanced conceptual understanding and application questions',
+    category: 'Preferences',
+    badge: 'Setting',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+    action: () => {
+      document.querySelectorAll('#difficulty-selector .difficulty-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.difficulty === 'intermediate');
+      });
+      appState.difficulty = 'Intermediate';
+      showNotificationToast('Difficulty set to Intermediate');
+    }
+  },
+  {
+    id: 'set-diff-adv',
+    title: 'Set Difficulty: Advanced',
+    subtitle: 'Rigorous analytical scenarios, edge cases, and synthesis',
+    category: 'Preferences',
+    badge: 'Setting',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+    action: () => {
+      document.querySelectorAll('#difficulty-selector .difficulty-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.difficulty === 'advanced');
+      });
+      appState.difficulty = 'Advanced';
+      showNotificationToast('Difficulty set to Advanced');
+    }
+  }
+];
+
+let paletteSelectedIndex = 0;
+let paletteFilteredItems = [];
+
+function openCommandPalette() {
+  playMechanicalTick(1600, 0.015);
+  const backdrop = document.getElementById('cmd-palette-backdrop');
+  const input = document.getElementById('palette-search-input');
+  if (!backdrop || !input) return;
+
+  backdrop.style.display = 'flex';
+  input.value = '';
+  paletteSelectedIndex = 0;
+  renderPaletteItems('');
+  input.focus();
+}
+
+function closeCommandPalette() {
+  const backdrop = document.getElementById('cmd-palette-backdrop');
+  if (backdrop) backdrop.style.display = 'none';
+  playMechanicalTick(1200, 0.012);
+}
+
+function renderPaletteItems(query = '') {
+  const list = document.getElementById('palette-results-list');
+  if (!list) return;
+
+  const q = query.trim().toLowerCase();
+  paletteFilteredItems = COMMAND_PALETTE_ITEMS.filter(item => {
+    if (!q) return true;
+    return item.title.toLowerCase().includes(q) ||
+           item.subtitle.toLowerCase().includes(q) ||
+           item.category.toLowerCase().includes(q);
+  });
+
+  if (paletteFilteredItems.length === 0) {
+    list.innerHTML = `
+      <div style="padding:2.5rem 1rem; text-align:center; color:var(--muted); font-size:0.9rem;">
+        No matching commands found for "${escapeHtml(query)}"
+      </div>
+    `;
+    paletteSelectedIndex = -1;
+    return;
+  }
+
+  if (paletteSelectedIndex >= paletteFilteredItems.length || paletteSelectedIndex < 0) {
+    paletteSelectedIndex = 0;
+  }
+
+  let html = '';
+  let lastCategory = '';
+  paletteFilteredItems.forEach((item, idx) => {
+    if (item.category !== lastCategory) {
+      lastCategory = item.category;
+      html += `<div class="palette-category-label">${escapeHtml(lastCategory)}</div>`;
+    }
+    const isSelected = idx === paletteSelectedIndex;
+    html += `
+      <div class="palette-item ${isSelected ? 'selected' : ''}" 
+           data-index="${idx}" 
+           onclick="executePaletteItem(${idx})"
+           onmouseenter="hoverPaletteItem(${idx})">
+        <div class="palette-item-icon">${item.icon}</div>
+        <div class="palette-item-text">
+          <div class="palette-item-title">${escapeHtml(item.title)}</div>
+          <div class="palette-item-sub">${escapeHtml(item.subtitle)}</div>
+        </div>
+        <span class="palette-item-badge">${escapeHtml(item.badge)}</span>
+      </div>
+    `;
+  });
+
+  list.innerHTML = html;
+}
+
+function updatePaletteSelection() {
+  const list = document.getElementById('palette-results-list');
+  if (!list) return;
+  const items = list.querySelectorAll('.palette-item');
+  items.forEach((item, idx) => {
+    item.classList.toggle('selected', idx === paletteSelectedIndex);
+    if (idx === paletteSelectedIndex) {
+      item.scrollIntoView({ block: 'nearest' });
+    }
+  });
+}
+
+function hoverPaletteItem(idx) {
+  if (paletteSelectedIndex !== idx) {
+    paletteSelectedIndex = idx;
+    updatePaletteSelection();
+  }
+}
+
+function executePaletteItem(idx) {
+  const item = paletteFilteredItems[idx];
+  if (!item) return;
+  playMechanicalTick(2200, 0.02);
+  closeCommandPalette();
+  setTimeout(() => {
+    item.action();
+  }, 50);
+}
+
+function initCommandPaletteListeners() {
+  // Check OS for badge label
+  const badge = document.getElementById('cmd-k-badge');
+  if (badge && !navigator.platform.toUpperCase().includes('MAC')) {
+    badge.textContent = 'Ctrl+K';
+  }
+
+  // Global keyboard shortcut
+  window.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+      e.preventDefault();
+      const backdrop = document.getElementById('cmd-palette-backdrop');
+      if (backdrop && backdrop.style.display === 'flex') {
+        closeCommandPalette();
+      } else {
+        openCommandPalette();
+      }
+      return;
+    }
+
+    if (e.key === '/' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) {
+      e.preventDefault();
+      openCommandPalette();
+      return;
+    }
+
+    const backdrop = document.getElementById('cmd-palette-backdrop');
+    if (backdrop && backdrop.style.display === 'flex') {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeCommandPalette();
+      }
+    }
+  });
+
+  // Search input listeners
+  const input = document.getElementById('palette-search-input');
+  if (input) {
+    input.addEventListener('input', (e) => {
+      paletteSelectedIndex = 0;
+      renderPaletteItems(e.target.value);
+    });
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (paletteFilteredItems.length > 0) {
+          paletteSelectedIndex = (paletteSelectedIndex + 1) % paletteFilteredItems.length;
+          updatePaletteSelection();
+          playMechanicalTick(2000, 0.006);
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (paletteFilteredItems.length > 0) {
+          paletteSelectedIndex = (paletteSelectedIndex - 1 + paletteFilteredItems.length) % paletteFilteredItems.length;
+          updatePaletteSelection();
+          playMechanicalTick(2000, 0.006);
+        }
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (paletteSelectedIndex >= 0 && paletteSelectedIndex < paletteFilteredItems.length) {
+          executePaletteItem(paletteSelectedIndex);
+        }
+      }
+    });
+  }
+}

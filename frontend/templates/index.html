@@ -5,10 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>StudyForge AI — Lecture Notes to Study Pack Generator</title>
   <meta name="description" content="Transform lecture notes into structured, exam-ready study packs using Groq's high-speed inference engine." />
-  <link rel="stylesheet" href="/static/css/main.css?v=3.2" />
+  <link rel="stylesheet" href="/static/css/main.css?v=3.3" />
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
+
+<!-- ── QUICK COMMAND PALETTE TRIGGER (CMD+K) ────────────────────────── -->
+<button class="spotlight-quick-pill" onclick="openCommandPalette()" aria-label="Command Palette">
+  <svg fill="none" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" stroke-width="2"/></svg>
+  <span>Quick Actions</span>
+  <kbd id="cmd-k-badge">⌘K</kbd>
+</button>
 
 <!-- ── FLOATING PILL NAVBAR (MATCHING HYNTS REFERENCE) ────────────────── -->
 <!-- ── SEMI-CIRCLE ROTATING WHEEL NAVIGATION (RETRACTABLE) ── -->
@@ -32,6 +39,9 @@
       <svg viewBox="0 0 24 24"><path d="M12 2L13.8 9.2L21 11L13.8 12.8L12 20L10.2 12.8L3 11L10.2 9.2L12 2Z"/></svg>
       <span>FORGE</span>
     </div>
+
+    <!-- Orbital Glowing Pip Indicator -->
+    <div class="wheel-orbital-pip" id="wheel-pip"></div>
 
     <!-- Radial Wheel Nav Items (Trigonometrically placed on arc) -->
     <!-- 1: Home -->
@@ -422,21 +432,48 @@
       </div>
     </div>
 
-    <!-- Audio Overview Player Bar -->
-    <div id="audio-player-bar" class="paper-card card-cream" style="display:none; margin-bottom:1.25rem; padding:0.85rem 1.25rem; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;">
-      <div style="display:flex; align-items:center; gap:0.75rem;">
-        <span style="font-weight:700; font-size:0.88rem; text-transform:uppercase; letter-spacing:1px;">Audio Briefing</span>
-        <span id="audio-status-label" style="font-size:0.82rem; color:var(--muted);">Ready to play</span>
-      </div>
-      <div style="display:flex; align-items:center; gap:0.6rem;">
-        <button class="btn btn-primary btn-sm" id="btn-audio-play-pause" onclick="playPauseAudio()">Play</button>
-        <button class="btn btn-secondary btn-sm" onclick="stopAudio()">Stop</button>
-        <div style="display:flex; align-items:center; gap:0.35rem; font-size:0.8rem; margin-left:0.5rem;">
-          <span style="color:var(--muted);">Speed:</span>
-          <button class="btn btn-ghost btn-sm" id="btn-speed-1" style="font-weight:700;" onclick="setAudioSpeed(1.0)">1x</button>
-          <button class="btn btn-ghost btn-sm" id="btn-speed-15" onclick="setAudioSpeed(1.5)">1.5x</button>
-          <button class="btn btn-ghost btn-sm" id="btn-speed-2" onclick="setAudioSpeed(2.0)">2x</button>
+    <!-- Audio Overview Player Bar (NotebookLM Style) -->
+    <div id="audio-player-bar" class="audio-podcast-card" style="display:none;">
+      <div class="podcast-left">
+        <button class="podcast-play-btn" id="btn-audio-play-pause" onclick="playPauseAudio()" aria-label="Play or Pause">
+          <svg class="play-icon" id="audio-play-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          <svg class="pause-icon" id="audio-pause-icon" viewBox="0 0 24 24" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </button>
+        <div class="podcast-meta">
+          <div style="display:flex; align-items:center; gap:0.5rem;">
+            <span class="podcast-title">Audio Briefing</span>
+            <div class="audio-equalizer" id="audio-eq" aria-hidden="true">
+              <span class="eq-bar"></span>
+              <span class="eq-bar"></span>
+              <span class="eq-bar"></span>
+              <span class="eq-bar"></span>
+              <span class="eq-bar"></span>
+            </div>
+          </div>
+          <span class="podcast-status" id="audio-status-label">Ready to play</span>
         </div>
+      </div>
+
+      <div class="podcast-center">
+        <div class="audio-track" onclick="seekAudioFromClick(event)">
+          <div class="audio-track-fill" id="audio-progress-bar" style="width: 0%;"></div>
+        </div>
+        <div class="audio-time-row">
+          <span id="audio-time-elapsed">0:00</span>
+          <span id="audio-time-total">0:00</span>
+        </div>
+      </div>
+
+      <div class="podcast-right">
+        <div class="speed-pill-group">
+          <button class="speed-btn active" id="btn-speed-1" onclick="setAudioSpeed(1.0)">1x</button>
+          <button class="speed-btn" id="btn-speed-125" onclick="setAudioSpeed(1.25)">1.25x</button>
+          <button class="speed-btn" id="btn-speed-15" onclick="setAudioSpeed(1.5)">1.5x</button>
+          <button class="speed-btn" id="btn-speed-2" onclick="setAudioSpeed(2.0)">2x</button>
+        </div>
+        <button class="podcast-stop-btn" onclick="stopAudio()" title="Stop & Reset">
+          <svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg>
+        </button>
       </div>
     </div>
     <div class="results-tabs" role="tablist">
@@ -1182,10 +1219,6 @@ Please provide:
 </div>
 
 <div class="toast-msg" id="toast-notification"> Done</div>
-<script src="/static/js/main.js?v=24.0"></script>
-<script src="/static/js/prompt_lab.js?v=1.0"></script>
-<script src="/static/js/evaluation.js?v=1.0"></script>
-
 
 <!-- Ask AI Slide-Over Drawer -->
 <div id="ask-ai-backdrop" onclick="toggleAskAiDrawer()" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:99998; backdrop-filter:blur(2px);"></div>
@@ -1217,5 +1250,27 @@ Please provide:
 
 </div>
 
+<!-- ── SPOTLIGHT COMMAND PALETTE MODAL (CMD + K) ──────────────────────── -->
+<div class="palette-backdrop" id="cmd-palette-backdrop" onclick="if(event.target===this) closeCommandPalette()" style="display:none;">
+  <div class="palette-box" role="dialog" aria-modal="true" aria-label="Command Palette">
+    <div class="palette-header">
+      <svg class="palette-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8" stroke-width="2"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke-width="2"/></svg>
+      <input type="text" id="palette-search-input" class="palette-input" placeholder="Type a command or jump to view..." autocomplete="off" />
+      <span class="palette-esc-badge" onclick="closeCommandPalette()">ESC</span>
+    </div>
+    <div class="palette-body" id="palette-results-list">
+      <!-- Injected dynamically by main.js -->
+    </div>
+    <div class="palette-footer">
+      <span><kbd>↑</kbd> <kbd>↓</kbd> Navigate</span>
+      <span><kbd>↵</kbd> Select</span>
+      <span><kbd>ESC</kbd> Close</span>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/main.js?v=25.0"></script>
+<script src="/static/js/prompt_lab.js?v=1.1"></script>
+<script src="/static/js/evaluation.js?v=1.1"></script>
 </body>
 </html>
