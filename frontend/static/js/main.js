@@ -451,7 +451,7 @@ async function executeStudyPackGeneration() {
     const rawContainer = document.getElementById('raw-markdown-content');
     rawContainer.innerHTML = '<div style="color:var(--muted); font-style:italic;">Generating study pack...</div>';
     
-    const vNames = { v1: 'V1 BASIC', v2: 'V2 STRUCTURED', v3: 'V3 MULTI-STEP' };
+    const vNames = { v1: 'V1', v2: 'V2', v3: 'V3' };
     document.getElementById('res-badge-version').textContent = vNames[appState.promptVersion] || 'V2';
     document.getElementById('res-badge-diff').textContent = appState.difficulty.toUpperCase();
     document.getElementById('result-title-display').textContent = subjectVal || 'Lecture Study Pack';
@@ -613,7 +613,7 @@ function renderParsedResults(data) {
   document.getElementById('raw-markdown-content').innerHTML = marked.parse(content);
   
   // 2. Toolbar Badges
-  const vNames = { v1: 'V1 BASIC', v2: 'V2 STRUCTURED', v3: 'V3 MULTI-STEP' };
+  const vNames = { v1: 'V1', v2: 'V2', v3: 'V3' };
   document.getElementById('res-badge-version').textContent = vNames[data.prompt_version] || 'V2';
   document.getElementById('res-badge-diff').textContent = data.difficulty.toUpperCase();
   document.getElementById('result-title-display').textContent = data.subject || 'Lecture Study Pack';
