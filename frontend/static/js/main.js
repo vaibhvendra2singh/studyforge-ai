@@ -699,6 +699,9 @@ function renderParsedResults(data) {
     }).catch(e => console.error("Auto diagram load error:", e));
   }
 
+  // Update Audio player metadata
+  updateAudioDurationDisplay();
+
   // Reset to Overview Tab
   switchResultTab('overview');
 }
@@ -1865,7 +1868,9 @@ const audioState = {
   utterance: null,
   progressTimer: null,
   elapsedSeconds: 0,
-  estimatedDuration: 60
+  estimatedDuration: 60,
+  fullText: '',
+  words: []
 };
 
 function formatAudioTime(seconds) {
@@ -1875,12 +1880,93 @@ function formatAudioTime(seconds) {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
+function updateAudioPlayIcon(state) {
+  // state: 'playing' | 'paused' | 'stopped'
+  const playIcon = document.getElementById('audio-play-icon');
+  const pauseIcon = document.getElementById('audio-pause-icon');
+  const playBtn = document.getElementById('btn-audio-play-pause');
+
+  if (playBtn) {
+    // Safeguard: remove any text nodes accidentally injected into the circular button
+    Array.from(playBtn.childNodes).forEach(node => {
+      if (node.nodeType === Node.TEXT_NODE) node.remove();
+    });
+  }
+
+  if (state === 'playing') {
+    // Show PAUSE symbol (❚❚)
+    if (playIcon) playIcon.style.display = 'none';
+    if (pauseIcon) pauseIcon.style.display = 'block';
+  } else {
+    // Show PLAY symbol (▶) to resume or start
+    if (playIcon) playIcon.style.display = 'block';
+    if (pauseIcon) pauseIcon.style.display = 'none';
+  }
+}
+
+function getAudioNarrationText() {
+  // 1. From appState.lastResult
+  if (appState.lastResult?.content) {
+    const parsed = parseStudyPackContent(appState.lastResult.content);
+    const summary = (parsed.summary || '').replace(/<[^>]*>/g, '').trim();
+    const concepts = (parsed.concepts || []).map(c => c.replace(/<[^>]*>/g, '').replace(/^[-*]\s*/, '').trim()).filter(Boolean);
+    const parts = [
+      `Study briefing for ${appState.lastResult.subject || 'your lecture'}.`,
+      summary ? `Summary: ${summary}` : '',
+      concepts.length > 0 ? `Key Concepts: ${concepts.join('. ')}` : ''
+    ].filter(Boolean);
+    if (parts.length > 0) return parts.join(' ');
+  }
+
+  // 2. From DOM summary element
+  const summaryEl = document.getElementById('res-summary-content');
+  if (summaryEl && summaryEl.innerText.trim()) {
+    const title = document.getElementById('result-title-display')?.innerText || 'Lecture';
+    return `Study briefing for ${title}. Summary: ${summaryEl.innerText.trim()}`;
+  }
+
+  // 3. From library packs if available
+  if (appState.libraryPacks && appState.libraryPacks.length > 0 && appState.libraryPacks[0].content) {
+    const pack = appState.libraryPacks[0];
+    const parsed = parseStudyPackContent(pack.content);
+    const summary = (parsed.summary || '').replace(/<[^>]*>/g, '').trim();
+    if (summary) return `Study briefing for ${pack.title || 'your lecture'}. Summary: ${summary}`;
+  }
+
+  // 4. From generator text box
+  const notesInput = document.getElementById('input-lecture-notes');
+  if (notesInput && notesInput.value.trim()) {
+    return `Lecture overview: ${notesInput.value.trim().slice(0, 800)}`;
+  }
+
+  return '';
+}
+
+function updateAudioDurationDisplay() {
+  const text = getAudioNarrationText();
+  const totalTimeEl = document.getElementById('audio-time-total');
+  if (!text) {
+    if (totalTimeEl) totalTimeEl.textContent = '0:00';
+    return;
+  }
+  const words = text.split(/\s+/).filter(Boolean);
+  audioState.fullText = text;
+  audioState.words = words;
+  audioState.estimatedDuration = Math.max(10, Math.round((words.length / 140) * 60 / audioState.rate));
+  if (totalTimeEl) totalTimeEl.textContent = formatAudioTime(audioState.estimatedDuration);
+}
+
 function toggleAudioOverview() {
   const bar = document.getElementById('audio-player-bar');
   if (!bar) return;
   if (bar.style.display === 'none' || !bar.style.display) {
     bar.style.display = 'flex';
+    updateAudioDurationDisplay();
     playMechanicalTick(1800, 0.015);
+    // Start playback immediately when user clicks Listen
+    if (!audioState.isPlaying) {
+      playPauseAudio();
+    }
   } else {
     bar.style.display = 'none';
     stopAudio();
@@ -1894,88 +1980,100 @@ function playPauseAudio() {
     return;
   }
 
-  const playIcon = document.getElementById('audio-play-icon');
-  const pauseIcon = document.getElementById('audio-pause-icon');
   const statusLabel = document.getElementById('audio-status-label');
   const eq = document.getElementById('audio-eq');
 
-  // If already playing, pause it
+  // Case 1: Currently Playing -> Pause it
   if (audioState.isPlaying && !audioState.isPaused) {
-    window.speechSynthesis.pause();
     audioState.isPaused = true;
+    try {
+      window.speechSynthesis.cancel(); // Cancel cleanly to avoid Chromium freeze
+    } catch (e) {}
     if (audioState.progressTimer) clearInterval(audioState.progressTimer);
-    if (playIcon) playIcon.style.display = 'block';
-    if (pauseIcon) pauseIcon.style.display = 'none';
+    updateAudioPlayIcon('paused'); // Shows PLAY symbol (▶) to resume
     if (statusLabel) statusLabel.textContent = 'Paused';
     if (eq) eq.classList.remove('playing');
     playMechanicalTick(1400, 0.012);
     return;
   }
 
-  // If paused, resume it
+  // Case 2: Currently Paused -> Resume from current offset
   if (audioState.isPaused) {
-    window.speechSynthesis.resume();
     audioState.isPaused = false;
-    if (playIcon) playIcon.style.display = 'none';
-    if (pauseIcon) pauseIcon.style.display = 'block';
+    audioState.isPlaying = true;
+    updateAudioPlayIcon('playing'); // Shows PAUSE symbol (❚❚)
     if (statusLabel) statusLabel.textContent = 'Playing lecture audio...';
     if (eq) eq.classList.add('playing');
-    startAudioProgressLoop();
     playMechanicalTick(2000, 0.012);
+
+    // Calculate words to speak from resume position
+    const words = audioState.words.length > 0 ? audioState.words : (getAudioNarrationText().split(/\s+/).filter(Boolean));
+    const fraction = audioState.estimatedDuration > 0 ? Math.min(0.95, audioState.elapsedSeconds / audioState.estimatedDuration) : 0;
+    const startWord = Math.floor(words.length * fraction);
+    const resumeText = words.slice(startWord).join(' ') || audioState.fullText;
+
+    startSpeechEngine(resumeText);
+    startAudioProgressLoop();
     return;
   }
 
-  // Build audio narration from Summary and Key Concepts
-  if (!appState.lastResult?.content) {
-    showNotificationToast("No study pack content to read.");
+  // Case 3: Start from beginning
+  const textToRead = getAudioNarrationText();
+  if (!textToRead) {
+    showNotificationToast("Please paste or generate lecture notes first.");
     return;
   }
 
-  const parsed = parseStudyPackContent(appState.lastResult.content);
-  const textToRead = [
-    `Study briefing for ${appState.lastResult.subject || 'your lecture'}.`,
-    `Summary: ${parsed.summary || 'Summary unavailable.'}`,
-    `Key Concepts: ${(parsed.concepts || []).map(c => c.replace(/^[-*]\s*/, '')).join('. ')}`
-  ].join(' ');
-
-  // Estimate duration: ~140 words per min at 1.0x rate
-  const words = textToRead.split(/\s+/).filter(Boolean).length;
-  audioState.estimatedDuration = Math.max(10, Math.round((words / 140) * 60 / audioState.rate));
+  audioState.fullText = textToRead;
+  audioState.words = textToRead.split(/\s+/).filter(Boolean);
   audioState.elapsedSeconds = 0;
+  audioState.isPaused = false;
+  audioState.isPlaying = true;
+  updateAudioDurationDisplay();
+  updateAudioPlayIcon('playing'); // Shows PAUSE symbol (❚❚)
 
-  const totalTimeEl = document.getElementById('audio-time-total');
-  if (totalTimeEl) totalTimeEl.textContent = formatAudioTime(audioState.estimatedDuration);
-  const elTime = document.getElementById('audio-time-elapsed');
-  if (elTime) elTime.textContent = '0:00';
+  if (statusLabel) statusLabel.textContent = 'Playing lecture audio...';
+  if (eq) eq.classList.add('playing');
+  playMechanicalTick(2000, 0.015);
+
   const bar = document.getElementById('audio-progress-bar');
   if (bar) bar.style.width = '0%';
+  const elTime = document.getElementById('audio-time-elapsed');
+  if (elTime) elTime.textContent = '0:00';
 
-  window.speechSynthesis.cancel();
-  audioState.utterance = new SpeechSynthesisUtterance(textToRead);
-  audioState.utterance.rate = audioState.rate;
+  startSpeechEngine(textToRead);
+  startAudioProgressLoop();
+}
 
-  audioState.utterance.onstart = () => {
-    audioState.isPlaying = true;
-    audioState.isPaused = false;
-    if (playIcon) playIcon.style.display = 'none';
-    if (pauseIcon) pauseIcon.style.display = 'block';
-    if (statusLabel) statusLabel.textContent = 'Playing lecture audio...';
-    if (eq) eq.classList.add('playing');
-    startAudioProgressLoop();
-  };
+function startSpeechEngine(text) {
+  try {
+    window.speechSynthesis.cancel();
+  } catch (e) {}
 
-  audioState.utterance.onend = () => {
-    stopAudio();
-    if (statusLabel) statusLabel.textContent = 'Finished';
-  };
+  setTimeout(() => {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = audioState.rate;
+    utterance.pitch = 1.0;
+    window.__activeUtterance = utterance; // Prevent garbage collection in Chromium
 
-  audioState.utterance.onerror = () => {
-    stopAudio();
-    if (statusLabel) statusLabel.textContent = 'Audio stopped';
-  };
+    utterance.onend = () => {
+      if (audioState.isPlaying && !audioState.isPaused) {
+        stopAudio();
+        const statusLabel = document.getElementById('audio-status-label');
+        if (statusLabel) statusLabel.textContent = 'Finished';
+      }
+    };
 
-  playMechanicalTick(2000, 0.015);
-  window.speechSynthesis.speak(audioState.utterance);
+    utterance.onerror = (e) => {
+      // If error is canceled by user action (pause/seek), ignore
+      if (e.error === 'canceled' || e.error === 'interrupted') return;
+      stopAudio();
+      const statusLabel = document.getElementById('audio-status-label');
+      if (statusLabel) statusLabel.textContent = 'Audio stopped';
+    };
+
+    window.speechSynthesis.speak(utterance);
+  }, 40);
 }
 
 function startAudioProgressLoop() {
@@ -1990,14 +2088,17 @@ function startAudioProgressLoop() {
     if (elTime) elTime.textContent = formatAudioTime(Math.floor(audioState.elapsedSeconds));
     if (pct >= 100) {
       clearInterval(audioState.progressTimer);
+      stopAudio();
+      const statusLabel = document.getElementById('audio-status-label');
+      if (statusLabel) statusLabel.textContent = 'Finished';
     }
   }, 250);
 }
 
 function stopAudio() {
-  if (window.speechSynthesis) {
-    window.speechSynthesis.cancel();
-  }
+  try {
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+  } catch (e) {}
   if (audioState.progressTimer) {
     clearInterval(audioState.progressTimer);
     audioState.progressTimer = null;
@@ -2006,15 +2107,12 @@ function stopAudio() {
   audioState.isPaused = false;
   audioState.elapsedSeconds = 0;
 
-  const playIcon = document.getElementById('audio-play-icon');
-  const pauseIcon = document.getElementById('audio-pause-icon');
+  updateAudioPlayIcon('stopped'); // Shows PLAY symbol (▶)
   const statusLabel = document.getElementById('audio-status-label');
   const eq = document.getElementById('audio-eq');
   const bar = document.getElementById('audio-progress-bar');
   const elTime = document.getElementById('audio-time-elapsed');
 
-  if (playIcon) playIcon.style.display = 'block';
-  if (pauseIcon) pauseIcon.style.display = 'none';
   if (statusLabel) statusLabel.textContent = 'Ready to play';
   if (eq) eq.classList.remove('playing');
   if (bar) bar.style.width = '0%';
@@ -2035,8 +2133,13 @@ function setAudioSpeed(speed) {
     if (el) el.classList.toggle('active', Math.abs(speed - s.val) < 0.05);
   });
   playMechanicalTick(2200, 0.01);
+  updateAudioDurationDisplay();
   if (audioState.isPlaying && !audioState.isPaused) {
-    stopAudio();
+    // Restart from current progress at new speed
+    const currentElapsed = audioState.elapsedSeconds;
+    audioState.isPaused = true;
+    try { window.speechSynthesis.cancel(); } catch(e) {}
+    audioState.elapsedSeconds = currentElapsed;
     playPauseAudio();
   }
 }
@@ -2053,6 +2156,14 @@ function seekAudioFromClick(event) {
   const elTime = document.getElementById('audio-time-elapsed');
   if (elTime) elTime.textContent = formatAudioTime(Math.floor(audioState.elapsedSeconds));
   playMechanicalTick(2400, 0.008);
+
+  // If playing, re-anchor speech to the seek point
+  if (audioState.isPlaying && !audioState.isPaused) {
+    const words = audioState.words.length > 0 ? audioState.words : (getAudioNarrationText().split(/\s+/).filter(Boolean));
+    const startWord = Math.floor(words.length * pct);
+    const seekText = words.slice(startWord).join(' ');
+    startSpeechEngine(seekText);
+  }
 }
 
 

@@ -1416,7 +1416,6 @@ textarea.form-control { min-height: 160px; resize: vertical; }
   body.wheel-nav-hovered .app-container {
     padding-left: 4.5rem !important;
   }
-  .spotlight-quick-pill span { display: none; }
   .podcast-center { display: none !important; }
 }
 
@@ -1618,50 +1617,6 @@ textarea.form-control { min-height: 160px; resize: vertical; }
 /* ──────────────────────────────────────────────────────────────────────────
    18. SPOTLIGHT COMMAND PALETTE (CMD+K / LINEAR STYLE)
    ────────────────────────────────────────────────────────────────────────── */
-.spotlight-quick-pill {
-  position: fixed;
-  top: 1.25rem;
-  right: 2rem;
-  z-index: 999;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  background: rgba(18, 18, 20, 0.85);
-  color: #fafafa;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  padding: 0.4rem 0.85rem;
-  border-radius: 20px;
-  font-size: 0.78rem;
-  cursor: pointer;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-  transition: all 0.2s ease;
-}
-
-.spotlight-quick-pill:hover {
-  background: #27272a;
-  border-color: rgba(255, 255, 255, 0.3);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
-}
-
-.spotlight-quick-pill svg {
-  width: 14px;
-  height: 14px;
-  stroke: #a1a1aa;
-}
-
-.spotlight-quick-pill kbd {
-  background: rgba(255, 255, 255, 0.12);
-  color: #e4e4e7;
-  padding: 2px 5px;
-  border-radius: 4px;
-  font-size: 0.7rem;
-  font-family: 'JetBrains Mono', monospace;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-}
-
 .palette-backdrop {
   position: fixed;
   inset: 0;
