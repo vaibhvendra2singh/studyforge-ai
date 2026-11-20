@@ -2397,6 +2397,27 @@ document.addEventListener('click', (e) => {
 
 
 // ==========================================================================
+// RETRACTABLE & EXPANDABLE RESULTS ACTION CAPSULE CONTROLLER
+// ==========================================================================
+function toggleResultsActions() {
+  const capsule = document.getElementById('retractable-capsule');
+  if (!capsule) return;
+  const isOpen = capsule.classList.toggle('open');
+  playMechanicalTick(isOpen ? 1700 : 1300, 0.03);
+}
+
+// Click outside to retract actions capsule
+document.addEventListener('click', (e) => {
+  const capsule = document.getElementById('retractable-capsule');
+  if (capsule && capsule.classList.contains('open')) {
+    if (!capsule.contains(e.target)) {
+      capsule.classList.remove('open');
+    }
+  }
+});
+
+
+// ==========================================================================
 // FEATURE 3: SPOTLIGHT COMMAND PALETTE (CMD + K / LINEAR & RAYCAST STYLE)
 // ==========================================================================
 const COMMAND_PALETTE_ITEMS = [

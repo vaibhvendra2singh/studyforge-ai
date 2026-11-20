@@ -1868,3 +1868,110 @@ textarea.form-control { min-height: 160px; resize: vertical; }
   font-family: 'JetBrains Mono', monospace;
 }
 
+/* ──────────────────────────────────────────────────────────────────────────
+   19. RETRACTABLE & EXPANDABLE ACTION CAPSULE (RESULTS TOOLBAR)
+   ────────────────────────────────────────────────────────────────────────── */
+.results-actions-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.stamps-cluster {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.retractable-capsule {
+  display: inline-flex;
+  align-items: center;
+  background: var(--card-cream);
+  border: 1px solid var(--line);
+  padding: 3px;
+  border-radius: 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+}
+
+.capsule-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  padding: 0.42rem 0.85rem;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.capsule-toggle-btn:hover {
+  transform: scale(1.03);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+}
+
+.capsule-icon {
+  width: 13px;
+  height: 13px;
+  stroke: currentColor;
+  stroke-width: 2.2;
+}
+
+.capsule-chevron {
+  width: 12px;
+  height: 12px;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.retractable-capsule.open .capsule-chevron {
+  transform: rotate(180deg);
+}
+
+/* Expandable items drawer */
+.capsule-items-drawer {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transform: scale(0.94) translateX(6px);
+  transform-origin: left center;
+  transition: 
+    max-width 0.42s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.25s ease,
+    transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1),
+    padding 0.3s ease;
+  padding-left: 0;
+}
+
+.retractable-capsule.open .capsule-items-drawer {
+  max-width: 540px;
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1) translateX(0);
+  padding-left: 0.35rem;
+  padding-right: 0.15rem;
+}
+
+.capsule-items-drawer .btn {
+  white-space: nowrap;
+  font-size: 0.78rem;
+  padding: 0.38rem 0.75rem;
+  border-radius: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+

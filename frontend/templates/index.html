@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>StudyForge AI — Lecture Notes to Study Pack Generator</title>
   <meta name="description" content="Transform lecture notes into structured, exam-ready study packs using Groq's high-speed inference engine." />
-  <link rel="stylesheet" href="/static/css/main.css?v=3.5" />
+  <link rel="stylesheet" href="/static/css/main.css?v=3.6" />
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script>
     if ('scrollRestoration' in history) {
@@ -421,14 +421,39 @@
         <h2 id="result-title-display">Study Pack</h2>
       </div>
 
-      <div style="display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap;">
-        <span class="stamp stamp-dark" id="res-badge-version">V2 STRUCTURED</span>
-        <span class="stamp" id="res-badge-diff">INTERMEDIATE</span>
+      <div class="results-actions-wrapper">
+        <div class="stamps-cluster">
+          <span class="stamp stamp-dark" id="res-badge-version">V2 STRUCTURED</span>
+          <span class="stamp" id="res-badge-diff">INTERMEDIATE</span>
+        </div>
         
-        <button class="btn btn-secondary btn-sm" id="btn-audio-listen" onclick="toggleAudioOverview()">Listen (Audio)</button>
-        <button class="btn btn-secondary btn-sm" id="btn-ask-ai-toggle" onclick="toggleAskAiDrawer()">Ask AI</button>
-        <button class="btn btn-secondary btn-sm" onclick="downloadCurrentPdf()">Download PDF</button>
-        <button class="btn btn-primary btn-sm" onclick="openEvaluationModal()">Score this Pack</button>
+        <!-- Retractable / Expandable Actions Capsule -->
+        <div class="retractable-capsule" id="retractable-capsule">
+          <button class="capsule-toggle-btn" id="capsule-toggle-btn" onclick="toggleResultsActions()" aria-label="Toggle Actions Menu">
+            <svg class="capsule-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><circle cx="19" cy="12" r="3"/><circle cx="5" cy="12" r="3"/></svg>
+            <span>Actions</span>
+            <svg class="capsule-chevron" id="capsule-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          
+          <div class="capsule-items-drawer" id="capsule-items-drawer">
+            <button class="btn btn-secondary btn-sm" id="btn-audio-listen" onclick="toggleAudioOverview()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px; height:13px; margin-right:3px;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+              Listen
+            </button>
+            <button class="btn btn-secondary btn-sm" id="btn-ask-ai-toggle" onclick="toggleAskAiDrawer()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px; height:13px; margin-right:3px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              Ask AI
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="downloadCurrentPdf()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px; height:13px; margin-right:3px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              PDF
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="openEvaluationModal()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px; height:13px; margin-right:3px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              Score
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1269,7 +1294,7 @@ Please provide:
   </div>
 </div>
 
-<script src="/static/js/main.js?v=30.0"></script>
+<script src="/static/js/main.js?v=31.0"></script>
 <script src="/static/js/prompt_lab.js?v=1.1"></script>
 <script src="/static/js/evaluation.js?v=1.1"></script>
 </body>
