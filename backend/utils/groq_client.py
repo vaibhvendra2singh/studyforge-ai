@@ -13,7 +13,8 @@ load_dotenv(_root / ".env")
 
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
-# Use the best model available on this Groq account
+# Candidate models with automatic graceful fallback
+FALLBACK_MODELS = ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b"]
 MODEL = "openai/gpt-oss-120b"
 
 # ─────────────────────────────────────────────
@@ -199,24 +200,28 @@ PROMPT_VERSIONS = {
 def call_groq(prompt: str, temperature: float = 0.4, max_tokens: int = 4096) -> dict:
     """
     Call Groq API and return result dict with content or error.
+    Automatically falls back to secondary models if token rate limits or capacity issues occur.
     """
-    try:
-        response = client.chat.completions.create(
-            model=MODEL,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=temperature,
-            max_tokens=max_tokens,
-        )
-        content = response.choices[0].message.content
-        usage = {
-            "prompt_tokens": response.usage.prompt_tokens,
-            "completion_tokens": response.usage.completion_tokens,
-            "total_tokens": response.usage.total_tokens,
-        }
-        return {"success": True, "content": content, "usage": usage, "model": MODEL}
-    except Exception as e:
-        error_msg = str(e)
-        return {"success": False, "error": error_msg}
+    last_err = ""
+    for model_name in FALLBACK_MODELS:
+        try:
+            response = client.chat.completions.create(
+                model=model_name,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+            content = response.choices[0].message.content
+            usage = {
+                "prompt_tokens": response.usage.prompt_tokens,
+                "completion_tokens": response.usage.completion_tokens,
+                "total_tokens": response.usage.total_tokens,
+            }
+            return {"success": True, "content": content, "usage": usage, "model": model_name}
+        except Exception as e:
+            last_err = str(e)
+            continue
+    return {"success": False, "error": last_err}
 
 def call_groq_stream(prompt: str, temperature: float = 0.4, max_tokens: int = 4096):
     """

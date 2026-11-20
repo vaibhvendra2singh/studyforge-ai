@@ -5,7 +5,7 @@ Input validation and sanitization utilities
 import re
 
 
-MAX_NOTES_LENGTH = 15000  # characters — roughly ~10 pages of text
+MAX_NOTES_LENGTH = 150000  # characters — handles extensive multi-page lecture notes and PDFs
 MIN_NOTES_LENGTH = 10
 ALLOWED_DIFFICULTIES = {"Beginner", "Intermediate", "Advanced"}
 
