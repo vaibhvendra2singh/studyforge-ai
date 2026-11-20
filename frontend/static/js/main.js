@@ -932,18 +932,18 @@ function generateStudyPackPdf(packData) {
   const cleanTitle = (subject || 'StudyPack').replace(/[^a-zA-Z0-9_-]/g, '_');
   const filename = `StudyForge_${cleanTitle}_${difficulty}.pdf`;
 
-  showNotificationToast("Generating PDF...");
+  showNotificationToast("Opening PDF export — press Ctrl+P / Cmd+P to save.");
 
-  // Build the content HTML (clean, no dark-theme CSS inherited)
+  // Build section HTML (all inline styles, no CSS variables)
   let bodyHtml = `
-    <div style="border-bottom: 2px solid #000; padding-bottom: 14px; margin-bottom: 22px; display: flex; justify-content: space-between; align-items: flex-end;">
+    <div class="sf-header">
       <div>
-        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #444; margin-bottom: 4px;">STUDYFORGE AI - STUDY PACK</div>
-        <h1 style="margin: 0; font-size: 22px; font-weight: 800; color: #000; line-height: 1.2;">${escapeHtml(subject)}</h1>
+        <div class="sf-label">STUDYFORGE AI - STUDY PACK</div>
+        <h1 class="sf-title">${escapeHtml(subject)}</h1>
       </div>
-      <div style="text-align: right;">
-        <span style="display: inline-block; padding: 4px 10px; background: #000; color: #fff; font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 1px;">${difficulty}</span>
-        <div style="font-size: 11px; color: #555; margin-top: 4px;">${dateStr}</div>
+      <div class="sf-meta">
+        <span class="sf-badge">${difficulty}</span>
+        <div class="sf-date">${dateStr}</div>
       </div>
     </div>
   `;
@@ -952,71 +952,59 @@ function generateStudyPackPdf(packData) {
   const diagramSvg = packData.diagram_svg || (document.querySelector('#res-diagram-svg-target svg')?.outerHTML);
   if (diagramSvg) {
     bodyHtml += `
-      <div style="margin-bottom: 22px; page-break-inside: avoid;">
-        <h2 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #000; border-bottom: 1px solid #d0d0d0; padding-bottom: 4px; margin-bottom: 10px;">Visual Concept Diagram</h2>
-        <div style="width: 100%; border: 1px solid #e0e0e0; border-radius: 6px; overflow: hidden; background: #fafafa; padding: 10px; text-align: center;">${diagramSvg}</div>
+      <div class="sf-section">
+        <h2 class="sf-section-title">Visual Concept Diagram</h2>
+        <div class="sf-diagram-box">${diagramSvg}</div>
       </div>
     `;
   }
 
-  let hasSections = false;
-
   if (parsed.summary) {
-    hasSections = true;
     bodyHtml += `
-      <div style="margin-bottom: 22px; page-break-inside: avoid;">
-        <h2 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #000; border-bottom: 1px solid #d0d0d0; padding-bottom: 4px; margin-bottom: 8px;">Summary</h2>
-        <div style="background: #f7f7f7; border-left: 4px solid #000; padding: 12px 16px; font-size: 13px; line-height: 1.7; color: #000;">${marked.parse(parsed.summary)}</div>
+      <div class="sf-section">
+        <h2 class="sf-section-title">Summary</h2>
+        <div class="sf-summary-box">${marked.parse(parsed.summary)}</div>
       </div>
     `;
   }
 
   if (parsed.concepts && parsed.concepts.length > 0) {
-    hasSections = true;
     bodyHtml += `
-      <div style="margin-bottom: 22px; page-break-inside: avoid;">
-        <h2 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #000; border-bottom: 1px solid #d0d0d0; padding-bottom: 4px; margin-bottom: 8px;">Key Concepts</h2>
-        <ul style="margin: 0; padding-left: 20px; line-height: 1.75;">
-          ${parsed.concepts.map(c => `<li style="margin-bottom: 6px; font-size: 13px; color: #000;">${marked.parseInline(c.replace(/^[-*]\s*/, ''))}</li>`).join('')}
+      <div class="sf-section">
+        <h2 class="sf-section-title">Key Concepts</h2>
+        <ul class="sf-list">
+          ${parsed.concepts.map(c => `<li>${marked.parseInline(c.replace(/^[-*]\s*/, ''))}</li>`).join('')}
         </ul>
       </div>
     `;
   }
 
   if (parsed.definitions && parsed.definitions.length > 0) {
-    hasSections = true;
     bodyHtml += `
-      <div style="margin-bottom: 22px; page-break-inside: avoid;">
-        <h2 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #000; border-bottom: 1px solid #d0d0d0; padding-bottom: 4px; margin-bottom: 8px;">Definitions</h2>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-          ${parsed.definitions.map(d => `
-            <div style="background: #f9f9f9; border: 1px solid #e2e2e2; border-radius: 4px; padding: 8px 10px; font-size: 12px; line-height: 1.5; color: #000;">
-              ${marked.parseInline(d.replace(/^[-*]|\d+\.\s*/, ''))}
-            </div>
-          `).join('')}
+      <div class="sf-section">
+        <h2 class="sf-section-title">Definitions</h2>
+        <div class="sf-def-grid">
+          ${parsed.definitions.map(d => `<div class="sf-def-item">${marked.parseInline(d.replace(/^[-*]|\d+\.\s*/, ''))}</div>`).join('')}
         </div>
       </div>
     `;
   }
 
   if (parsed.mcqs && parsed.mcqs.length > 0) {
-    hasSections = true;
     bodyHtml += `
-      <div style="margin-bottom: 22px;">
-        <h2 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #000; border-bottom: 1px solid #d0d0d0; padding-bottom: 4px; margin-bottom: 10px;">Practice Quiz</h2>
+      <div class="sf-section">
+        <h2 class="sf-section-title">Practice Quiz</h2>
         ${parsed.mcqs.map((mcq, idx) => `
-          <div style="margin-bottom: 12px; padding: 10px 12px; border: 1px solid #d8d8d8; border-radius: 5px; background: #fff; page-break-inside: avoid;">
-            <div style="font-weight: 700; font-size: 12.5px; margin-bottom: 6px; color: #000;">Q${idx + 1}. ${escapeHtml(mcq.question)}</div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 8px;">
+          <div class="sf-mcq">
+            <div class="sf-mcq-q">Q${idx + 1}. ${escapeHtml(mcq.question)}</div>
+            <div class="sf-opts">
               ${mcq.options.map((opt, i) => {
                 const letter = String.fromCharCode(65 + i);
-                const clean = opt.replace(/^[A-D][\).:\s-]+/i, '').trim();
-                return `<div style="padding: 5px 8px; background: #f2f2f2; border-radius: 4px; font-size: 11.5px; color: #000;"><strong>${letter})</strong> ${escapeHtml(clean)}</div>`;
+                const clean = opt.replace(/^[A-D][).:\s-]+/i, '').trim();
+                return `<div class="sf-opt"><strong>${letter})</strong> ${escapeHtml(clean)}</div>`;
               }).join('')}
             </div>
-            <div style="font-size: 11px; color: #222; background: #f8f8f8; border-top: 1px dashed #ccc; padding: 5px 8px; margin-top: 4px;">
-              <strong>Answer:</strong> ${escapeHtml(mcq.correct)} ${mcq.explanation ? `&mdash; ${escapeHtml(mcq.explanation)}` : ''}
-            </div>
+            <div class="sf-answer"><strong>Answer:</strong> ${escapeHtml(mcq.correct)}${mcq.explanation ? ` &mdash; ${escapeHtml(mcq.explanation)}` : ''}</div>
           </div>
         `).join('')}
       </div>
@@ -1024,116 +1012,264 @@ function generateStudyPackPdf(packData) {
   }
 
   if (parsed.saqs && parsed.saqs.length > 0) {
-    hasSections = true;
     bodyHtml += `
-      <div style="margin-bottom: 22px;">
-        <h2 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #000; border-bottom: 1px solid #d0d0d0; padding-bottom: 4px; margin-bottom: 10px;">Short Answer Questions</h2>
+      <div class="sf-section">
+        <h2 class="sf-section-title">Short Answer Questions</h2>
         ${parsed.saqs.map((saq, idx) => `
-          <div style="margin-bottom: 12px; padding: 10px 12px; border: 1px solid #d8d8d8; border-radius: 5px; background: #fff; page-break-inside: avoid;">
-            <div style="font-weight: 700; font-size: 12.5px; margin-bottom: 5px; color: #000;">Q${idx + 1}. ${escapeHtml(saq.question)}</div>
-            <div style="font-size: 11.5px; color: #000; background: #f7f7f7; border-left: 3px solid #000; padding: 7px 10px; line-height: 1.6;">
-              <strong>Model Answer:</strong> ${escapeHtml(saq.answer)}
-            </div>
+          <div class="sf-saq">
+            <div class="sf-saq-q">Q${idx + 1}. ${escapeHtml(saq.question)}</div>
+            <div class="sf-saq-a"><strong>Model Answer:</strong> ${escapeHtml(saq.answer)}</div>
           </div>
         `).join('')}
       </div>
     `;
   }
 
-  if (!hasSections) {
-    bodyHtml += `<div style="margin-bottom: 22px; font-size: 13px; line-height: 1.7; color: #000;">${marked.parse(content)}</div>`;
+  if (!parsed.summary && (!parsed.concepts || parsed.concepts.length === 0)) {
+    bodyHtml += `<div class="sf-section">${marked.parse(content)}</div>`;
   }
 
-  bodyHtml += `<div style="border-top: 1px solid #e0e0e0; padding-top: 10px; margin-top: 24px; font-size: 10px; color: #666; text-align: center;">Generated by StudyForge AI - Comprehensive Academic Study Pack</div>`;
+  bodyHtml += `<div class="sf-footer">Generated by StudyForge AI &mdash; Academic Study Pack</div>`;
 
-  // Isolated iframe approach — completely prevents dark-theme CSS bleed
-  const iframe = document.createElement('iframe');
-  iframe.style.cssText = 'position:fixed;top:0;left:0;width:800px;height:1100px;border:none;opacity:0;pointer-events:none;z-index:-9999;';
-  document.body.appendChild(iframe);
-
-  const iDoc = iframe.contentWindow.document;
-  iDoc.open();
-  iDoc.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
-    * { margin: 0; padding: 0; box-sizing: border-box; color: #000 !important; background: transparent; }
-    body { background: #ffffff !important; color: #000000 !important; font-family: Arial, Helvetica, sans-serif; padding: 32px 36px; width: 800px; }
-    h1, h2, h3, h4, h5, h6 { color: #000000 !important; font-family: Arial, Helvetica, sans-serif; }
-    p, li, div, span, td, th { color: #000000 !important; font-family: Arial, Helvetica, sans-serif; }
-    strong, b, em, i { color: inherit !important; }
-    ul, ol { padding-left: 20px; }
-  </style></head><body>${bodyHtml}</body></html>`);
-  iDoc.close();
-
-  if (window.html2pdf) {
-    setTimeout(() => {
-      html2pdf().set({
-        margin: [10, 10, 10, 10],
-        filename: filename,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: '#ffffff',
-          windowWidth: 800,
-          scrollX: 0,
-          scrollY: 0
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'] }
-      }).from(iDoc.body).save().then(() => {
-        if (document.body.contains(iframe)) document.body.removeChild(iframe);
-        showNotificationToast("PDF downloaded successfully!");
-      }).catch(err => {
-        console.error("PDF export error:", err);
-        if (document.body.contains(iframe)) document.body.removeChild(iframe);
-        fallbackPrintPdf(bodyHtml, filename);
-      });
-    }, 400);
-  } else {
-    setTimeout(() => {
-      if (document.body.contains(iframe)) document.body.removeChild(iframe);
-      fallbackPrintPdf(bodyHtml, filename);
-    }, 400);
+  // Open clean popup window — zero CSS inheritance from the dark-themed app
+  const popup = window.open('', '_blank', 'width=900,height=700,scrollbars=yes,menubar=yes,toolbar=yes');
+  if (!popup) {
+    showNotificationToast("Allow pop-ups for PDF export.");
+    return;
   }
-}
 
-// Fallback high-fidelity browser print
-function fallbackPrintPdf(htmlContent, title) {
-  const printIframe = document.createElement('iframe');
-  printIframe.style.position = 'fixed';
-  printIframe.style.top = '-9999px';
-  printIframe.style.left = '-9999px';
-  printIframe.style.width = '100%';
-  printIframe.style.height = '100%';
-  document.body.appendChild(printIframe);
+  popup.document.open();
+  popup.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>${escapeHtml(filename)}</title>
+  <style>
+    @page { size: A4; margin: 15mm 14mm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 13px;
+      color: #000000;
+      background: #ffffff;
+      padding: 0;
+    }
+    /* Header */
+    .sf-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-bottom: 2px solid #000;
+      padding-bottom: 12px;
+      margin-bottom: 20px;
+    }
+    .sf-label {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #555;
+      margin-bottom: 4px;
+    }
+    .sf-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: #000;
+      line-height: 1.2;
+    }
+    .sf-meta { text-align: right; }
+    .sf-badge {
+      display: inline-block;
+      padding: 3px 9px;
+      background: #000;
+      color: #fff;
+      font-size: 9px;
+      font-weight: 700;
+      border-radius: 3px;
+      letter-spacing: 1px;
+    }
+    .sf-date { font-size: 10px; color: #555; margin-top: 4px; }
 
-  const doc = printIframe.contentWindow.document;
-  doc.open();
-  doc.write(`
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>${title}</title>
-        <style>
-          @page { size: A4; margin: 15mm; }
-          body { font-family: Arial, Helvetica, sans-serif; color: #000000; background: #ffffff; margin: 0; padding: 0; }
-          * { box-sizing: border-box; }
-        </style>
-      </head>
-      <body>
-        ${htmlContent}
-      </body>
-    </html>
-  `);
-  doc.close();
+    /* Sections */
+    .sf-section {
+      margin-bottom: 20px;
+      page-break-inside: avoid;
+    }
+    .sf-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #000;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 4px;
+      margin-bottom: 8px;
+    }
 
-  setTimeout(() => {
-    printIframe.contentWindow.focus();
-    printIframe.contentWindow.print();
-    setTimeout(() => {
-      if (document.body.contains(printIframe)) document.body.removeChild(printIframe);
-    }, 2000);
-  }, 500);
+    /* Summary */
+    .sf-summary-box {
+      background: #f5f5f5;
+      border-left: 4px solid #000;
+      padding: 10px 14px;
+      font-size: 12.5px;
+      line-height: 1.65;
+      color: #000;
+    }
+    .sf-summary-box p { margin-bottom: 6px; color: #000; }
+    .sf-summary-box strong { color: #000; }
+
+    /* Concepts list */
+    .sf-list { padding-left: 18px; }
+    .sf-list li { margin-bottom: 5px; font-size: 12.5px; color: #000; line-height: 1.5; }
+    .sf-list li strong { color: #000; }
+
+    /* Definitions grid */
+    .sf-def-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+    }
+    .sf-def-item {
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+      padding: 7px 9px;
+      font-size: 11.5px;
+      line-height: 1.45;
+      color: #000;
+    }
+    .sf-def-item strong { color: #000; }
+
+    /* MCQ */
+    .sf-mcq {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 9px 11px;
+      margin-bottom: 10px;
+      background: #fff;
+      page-break-inside: avoid;
+    }
+    .sf-mcq-q {
+      font-weight: 700;
+      font-size: 12.5px;
+      margin-bottom: 6px;
+      color: #000;
+    }
+    .sf-opts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      margin-bottom: 7px;
+    }
+    .sf-opt {
+      background: #f2f2f2;
+      border-radius: 3px;
+      padding: 4px 7px;
+      font-size: 11px;
+      color: #000;
+    }
+    .sf-opt strong { color: #000; }
+    .sf-answer {
+      font-size: 11px;
+      background: #f8f8f8;
+      border-top: 1px dashed #ccc;
+      padding: 5px 7px;
+      color: #000;
+    }
+    .sf-answer strong { color: #000; }
+
+    /* SAQ */
+    .sf-saq {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 9px 11px;
+      margin-bottom: 10px;
+      background: #fff;
+      page-break-inside: avoid;
+    }
+    .sf-saq-q {
+      font-weight: 700;
+      font-size: 12.5px;
+      margin-bottom: 6px;
+      color: #000;
+    }
+    .sf-saq-a {
+      background: #f5f5f5;
+      border-left: 3px solid #000;
+      padding: 6px 10px;
+      font-size: 11.5px;
+      line-height: 1.55;
+      color: #000;
+    }
+    .sf-saq-a strong { color: #000; }
+
+    /* Diagram */
+    .sf-diagram-box {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 8px;
+      background: #fafafa;
+      text-align: center;
+    }
+
+    /* Footer */
+    .sf-footer {
+      margin-top: 20px;
+      border-top: 1px solid #ddd;
+      padding-top: 8px;
+      font-size: 9px;
+      color: #777;
+      text-align: center;
+    }
+
+    /* Print button (hidden when printing) */
+    .print-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: #000;
+      color: #fff;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: Arial, sans-serif;
+      font-size: 13px;
+      z-index: 9999;
+    }
+    .print-bar button {
+      background: #fff;
+      color: #000;
+      border: none;
+      padding: 6px 18px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+    .sf-content { margin-top: 48px; }
+    @media print {
+      .print-bar { display: none; }
+      .sf-content { margin-top: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="print-bar">
+    <span>${escapeHtml(filename)}</span>
+    <button onclick="window.print()">Save as PDF (Ctrl+P / Cmd+P)</button>
+  </div>
+  <div class="sf-content">
+    ${bodyHtml}
+  </div>
+  <script>
+    // Auto-trigger print dialog after content loads
+    window.onload = function() { setTimeout(function() { window.print(); }, 600); };
+  </script>
+</body>
+</html>`);
+  popup.document.close();
 }
 
 // ── MY STUDY PACKS (SAVED PACKS) ──────────────────────────────────────────
