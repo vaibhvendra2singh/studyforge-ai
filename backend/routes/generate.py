@@ -324,7 +324,7 @@ def generate_study_pack_stream():
 def export_study_pack_pdf():
     """
     Server-side native vector PDF generation using PyMuPDF.
-    Produces crisp, selectable text, full page width, zero cutoffs, no browser canvas quirks.
+    Produces crisp, selectable text, full page width, zero cutoffs, with vector diagram.
     """
     import fitz
     import re
@@ -338,6 +338,7 @@ def export_study_pack_pdf():
     subject = data.get("subject") or data.get("title") or "Study Pack"
     difficulty = (data.get("difficulty") or "Intermediate").upper()
     content = data.get("content") or ""
+    diagram_svg = data.get("diagram_svg") or ""
 
     if not content.strip():
         return jsonify({"error": "No content provided to generate PDF."}), 400
@@ -368,6 +369,26 @@ def export_study_pack_pdf():
     y += 24
     page.draw_line(fitz.Point(margin, y), fitz.Point(page_w - margin, y), color=(0, 0, 0), width=1.5)
     y += 18
+
+    # Insert Concept Diagram if present
+    if diagram_svg and "<svg" in diagram_svg:
+        try:
+            clean_svg = re.sub(r"[𐀀-􏿿]", "", diagram_svg).strip()
+            svg_doc = fitz.open("svg", clean_svg.encode("utf-8"))
+            svg_pdf_bytes = svg_doc.convert_to_pdf()
+            svg_pdf = fitz.open("pdf", svg_pdf_bytes)
+            diag_h = 190.0
+            if y + diag_h + 30 > page_h - margin:
+                page = add_page()
+                y = margin + 10
+            page.insert_text(fitz.Point(margin, y + 10), "VISUAL CONCEPT DIAGRAM", fontsize=9.5, fontname="helv", color=(0.2, 0.2, 0.2))
+            y += 18
+            diag_rect = fitz.Rect(margin, y, page_w - margin, y + diag_h)
+            page.draw_rect(diag_rect, color=(0.85, 0.85, 0.85), fill=(0.98, 0.98, 0.98))
+            page.show_pdf_page(diag_rect, svg_pdf, 0)
+            y += diag_h + 20
+        except Exception as e:
+            pass
 
     lines = clean_content.split("\n")
     for raw_line in lines:
@@ -401,7 +422,7 @@ def export_study_pack_pdf():
             page.insert_text(fitz.Point(margin, y + 10), line_clean, fontsize=10, fontname="helv", color=(0.1, 0.1, 0.1))
             y += 18
         else:
-            # Body text box
+            # Body text box across full width
             est_lines = max(1, len(line_clean) // 80 + 1)
             est_h = est_lines * 14 + 4
             if y + est_h > page_h - margin - 20:

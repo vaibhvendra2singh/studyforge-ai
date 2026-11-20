@@ -940,7 +940,8 @@ async function generateStudyPackPdf(packData) {
       body: JSON.stringify({
         subject: subject,
         difficulty: difficulty,
-        content: packData.content
+        content: packData.content,
+        diagram_svg: packData.diagram_svg || (document.querySelector("#res-diagram-svg-target svg") ? document.querySelector("#res-diagram-svg-target svg").outerHTML : "")
       })
     });
 
