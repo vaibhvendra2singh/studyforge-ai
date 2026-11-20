@@ -1733,6 +1733,14 @@ function initEventListeners() {
 
   // Spotlight Command Palette Listeners
   initCommandPaletteListeners();
+
+  // Global tactile mechanical click audio feedback on all interactions
+  document.addEventListener('click', (e) => {
+    const interactive = e.target.closest('button, a, .clickable, .results-tab-btn, .pill-nav-item, .wheel-item, .wheel-hub-toggle, .paper-card, .radio-option, .difficulty-btn, .option-card, .mcq-option-btn, .speed-btn, .podcast-play-btn, .podcast-stop-btn, .palette-item, [role="button"], input[type="radio"], input[type="checkbox"], select, .tab-btn, .chip');
+    if (interactive) {
+      playMechanicalTick(1850, 0.012);
+    }
+  }, true);
 }
 
 
