@@ -452,3 +452,49 @@ def export_study_pack_pdf():
         as_attachment=True,
         download_name=f"StudyForge_{clean_filename}_{difficulty}.pdf"
     )
+
+
+@generate_bp.route("/study-pack/ask", methods=["POST"])
+def ask_about_study_pack():
+    """
+    POST /api/study-pack/ask
+    Answers user questions strictly grounded in the generated study pack and notes.
+    """
+    try:
+        data = request.get_json(force=True)
+    except Exception:
+        return jsonify({"error": "Invalid request payload"}), 400
+
+    question = (data.get("question") or "").strip()
+    study_pack_content = (data.get("content") or "").strip()
+    notes = (data.get("notes") or "").strip()
+
+    if not question:
+        return jsonify({"error": "No question provided"}), 400
+
+    prompt = f"""You are a patient academic tutor. Answer the student's question based strictly on their lecture notes and the generated study pack.
+
+STUDENT QUESTION:
+{question}
+
+STUDY PACK CONTEXT:
+{study_pack_content[:2500]}
+
+ORIGINAL NOTES CONTEXT:
+{notes[:1500]}
+
+INSTRUCTIONS:
+1. Provide a clear, direct, and concise explanation in simple academic English.
+2. If asked for analogies or simpler terms, provide intuitive real-world comparisons.
+3. If the answer cannot be determined from the provided materials, state: "This concept is not covered in your current study pack or lecture notes."
+4. Do NOT use any emojis anywhere in your answer.
+"""
+
+    res = call_groq(prompt, temperature=0.3, max_tokens=1024)
+    if not res["success"]:
+        return jsonify({"error": f"AI response failed: {res.get('error')}"}), 502
+
+    return jsonify({
+        "success": True,
+        "answer": res["content"]
+    })

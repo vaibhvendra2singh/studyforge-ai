@@ -838,7 +838,7 @@ function createInteractiveMcqCard(mcq, num, difficulty) {
           .replace(/^\s*[-•]\s*/, '')
           .trim();
         return `
-          <button class="mcq-option-btn" onclick="selectMcqOption(this, '${letter}', ${num})">
+          <button class="mcq-option-btn" data-letter="${letter}" onclick="selectMcqOption(this, '${letter}', ${num})">
             <span class="opt-letter">${letter}</span>
             <span>${cleanOpt}</span>
           </button>
@@ -879,15 +879,20 @@ function switchResultTab(tabKey) {
   appState.currentResultTab = tabKey;
   
   document.querySelectorAll('.results-tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(`tab-btn-${tabKey}`).classList.add('active');
+  const btn = document.getElementById(`tab-btn-${tabKey}`);
+  if (btn) btn.classList.add('active');
 
-  ['overview', 'summary', 'concepts', 'definitions', 'diagram', 'mcqs', 'saqs'].forEach(k => {
-    const p = document.getElementById(`res-panel-${k}`);
+  ['overview', 'flashcards', 'summary', 'concepts', 'definitions', 'diagram', 'mcqs', 'saqs'].forEach(k => {
+    const p = (k === 'mcqs') ? document.getElementById('res-panel-mcqs-wrapper') : document.getElementById(`res-panel-${k}`);
     if (p) {
       p.style.display = (k === tabKey) ? 'block' : 'none';
-      if (k === 'mcqs' && k === tabKey) p.style.display = 'flex';
+      if (k === 'saqs' && k === tabKey) p.style.display = 'flex';
     }
   });
+
+  if (tabKey === 'flashcards') {
+    renderFlashcardsFromCurrentPack();
+  }
 }
 
 function copyCurrentOutput() {
@@ -1595,5 +1600,422 @@ function initEventListeners() {
       document.body.classList.remove('nav-is-hovered');
       appContainer.style.paddingLeft = '';
     });
+  }
+}
+
+
+// ==========================================================================
+// FEATURE 1: INTERACTIVE FLASHCARDS (SPACED REPETITION)
+// ==========================================================================
+const flashcardState = {
+  cards: [],
+  currentIndex: 0,
+  isFlipped: false,
+  masteredIndices: new Set()
+};
+
+function renderFlashcardsFromCurrentPack() {
+  if (!appState.lastResult?.content) return;
+  const parsed = parseStudyPackContent(appState.lastResult.content);
+  flashcardState.cards = [];
+  flashcardState.currentIndex = 0;
+  flashcardState.isFlipped = false;
+  flashcardState.masteredIndices.clear();
+
+  // 1. Add Definitions as flashcards
+  (parsed.definitions || []).forEach(d => {
+    const clean = d.replace(/^[-*]|\d+\.\s*/, '').trim();
+    if (clean.includes(':')) {
+      const parts = clean.split(':');
+      flashcardState.cards.push({
+        term: parts[0].replace(/\*+/g, '').trim(),
+        definition: parts.slice(1).join(':').trim(),
+        type: 'Definition'
+      });
+    }
+  });
+
+  // 2. Add Key Concepts as flashcards
+  (parsed.concepts || []).forEach(c => {
+    const clean = c.replace(/^[-*]\s*/, '').trim();
+    if (clean.includes(':')) {
+      const parts = clean.split(':');
+      flashcardState.cards.push({
+        term: parts[0].replace(/\*+/g, '').trim(),
+        definition: parts.slice(1).join(':').trim(),
+        type: 'Key Concept'
+      });
+    } else {
+      flashcardState.cards.push({
+        term: 'Concept',
+        definition: clean.replace(/\*+/g, '').trim(),
+        type: 'Key Concept'
+      });
+    }
+  });
+
+  if (flashcardState.cards.length === 0) {
+    flashcardState.cards.push({
+      term: 'No Flashcards Found',
+      definition: 'Generate a study pack with definitions and concepts to practice flashcards.',
+      type: 'Notice'
+    });
+  }
+
+  updateFlashcardDisplay();
+}
+
+function updateFlashcardDisplay() {
+  const total = flashcardState.cards.length;
+  if (total === 0) return;
+
+  const card = flashcardState.cards[flashcardState.currentIndex];
+  const sideLabel = document.getElementById('fc-side-label');
+  const cardText = document.getElementById('fc-card-text');
+  const badge = document.getElementById('fc-progress-badge');
+  const masteryText = document.getElementById('fc-mastery-text');
+  const progressBar = document.getElementById('fc-progress-bar');
+
+  if (badge) badge.textContent = `Card ${flashcardState.currentIndex + 1} / ${total}`;
+  if (masteryText) masteryText.textContent = `${flashcardState.masteredIndices.size} / ${total} Mastered`;
+  if (progressBar) progressBar.style.width = `${(flashcardState.masteredIndices.size / total) * 100}%`;
+
+  if (!flashcardState.isFlipped) {
+    if (sideLabel) sideLabel.textContent = `FRONT (${card.type.toUpperCase()})`;
+    if (cardText) cardText.textContent = card.term;
+  } else {
+    if (sideLabel) sideLabel.textContent = `BACK (ANSWER / EXPLANATION)`;
+    if (cardText) cardText.textContent = card.definition;
+  }
+}
+
+function flipFlashcard() {
+  flashcardState.isFlipped = !flashcardState.isFlipped;
+  updateFlashcardDisplay();
+}
+
+function nextFlashcard() {
+  if (flashcardState.cards.length === 0) return;
+  flashcardState.currentIndex = (flashcardState.currentIndex + 1) % flashcardState.cards.length;
+  flashcardState.isFlipped = false;
+  updateFlashcardDisplay();
+}
+
+function prevFlashcard() {
+  if (flashcardState.cards.length === 0) return;
+  flashcardState.currentIndex = (flashcardState.currentIndex - 1 + flashcardState.cards.length) % flashcardState.cards.length;
+  flashcardState.isFlipped = false;
+  updateFlashcardDisplay();
+}
+
+function markCardReviewed(isMastered) {
+  if (isMastered) {
+    flashcardState.masteredIndices.add(flashcardState.currentIndex);
+    showNotificationToast("Marked as mastered!");
+  } else {
+    flashcardState.masteredIndices.delete(flashcardState.currentIndex);
+    showNotificationToast("Scheduled for review!");
+  }
+  nextFlashcard();
+}
+
+// Spacebar listener to flip flashcards
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space' && appState.currentResultTab === 'flashcards' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+    e.preventDefault();
+    flipFlashcard();
+  }
+});
+
+
+// ==========================================================================
+// FEATURE 2: AUDIO OVERVIEW / TEXT-TO-SPEECH (LECTURE BRIEFING)
+// ==========================================================================
+const audioState = {
+  isPlaying: false,
+  isPaused: false,
+  rate: 1.0,
+  utterance: null
+};
+
+function toggleAudioOverview() {
+  const bar = document.getElementById('audio-player-bar');
+  if (!bar) return;
+  if (bar.style.display === 'none' || !bar.style.display) {
+    bar.style.display = 'flex';
+  } else {
+    bar.style.display = 'none';
+    stopAudio();
+  }
+}
+
+function playPauseAudio() {
+  if (!window.speechSynthesis) {
+    showNotificationToast("Text-to-speech not supported in this browser.");
+    return;
+  }
+
+  const playBtn = document.getElementById('btn-audio-play-pause');
+  const statusLabel = document.getElementById('audio-status-label');
+
+  if (audioState.isPlaying && !audioState.isPaused) {
+    window.speechSynthesis.pause();
+    audioState.isPaused = true;
+    if (playBtn) playBtn.textContent = 'Resume';
+    if (statusLabel) statusLabel.textContent = 'Paused';
+    return;
+  }
+
+  if (audioState.isPaused) {
+    window.speechSynthesis.resume();
+    audioState.isPaused = false;
+    if (playBtn) playBtn.textContent = 'Pause';
+    if (statusLabel) statusLabel.textContent = 'Playing...';
+    return;
+  }
+
+  // Build audio narration from Summary and Key Concepts
+  if (!appState.lastResult?.content) {
+    showNotificationToast("No study pack content to read.");
+    return;
+  }
+
+  const parsed = parseStudyPackContent(appState.lastResult.content);
+  const textToRead = [
+    `Study briefing for ${appState.lastResult.subject || 'your lecture'}.`,
+    `Summary: ${parsed.summary || 'Summary unavailable.'}`,
+    `Key Concepts: ${(parsed.concepts || []).map(c => c.replace(/^[-*]\s*/, '')).join('. ')}`
+  ].join(' ');
+
+  window.speechSynthesis.cancel();
+  audioState.utterance = new SpeechSynthesisUtterance(textToRead);
+  audioState.utterance.rate = audioState.rate;
+
+  audioState.utterance.onstart = () => {
+    audioState.isPlaying = true;
+    audioState.isPaused = false;
+    if (playBtn) playBtn.textContent = 'Pause';
+    if (statusLabel) statusLabel.textContent = 'Playing lecture audio...';
+  };
+
+  audioState.utterance.onend = () => {
+    audioState.isPlaying = false;
+    audioState.isPaused = false;
+    if (playBtn) playBtn.textContent = 'Play';
+    if (statusLabel) statusLabel.textContent = 'Finished';
+  };
+
+  audioState.utterance.onerror = () => {
+    audioState.isPlaying = false;
+    audioState.isPaused = false;
+    if (playBtn) playBtn.textContent = 'Play';
+    if (statusLabel) statusLabel.textContent = 'Audio stopped';
+  };
+
+  window.speechSynthesis.speak(audioState.utterance);
+}
+
+function stopAudio() {
+  if (window.speechSynthesis) {
+    window.speechSynthesis.cancel();
+  }
+  audioState.isPlaying = false;
+  audioState.isPaused = false;
+  const playBtn = document.getElementById('btn-audio-play-pause');
+  const statusLabel = document.getElementById('audio-status-label');
+  if (playBtn) playBtn.textContent = 'Play';
+  if (statusLabel) statusLabel.textContent = 'Stopped';
+}
+
+function setAudioSpeed(speed) {
+  audioState.rate = speed;
+  ['1', '15', '2'].forEach(s => {
+    const b = document.getElementById(`btn-speed-${s}`);
+    if (b) b.style.fontWeight = (speed === (s === '15' ? 1.5 : (s === '1' ? 1.0 : 2.0))) ? '800' : '400';
+  });
+  if (audioState.isPlaying) {
+    stopAudio();
+    playPauseAudio();
+  }
+}
+
+
+// ==========================================================================
+// FEATURE 3: TIMED QUIZ MODE & INSTANT SCORECARD
+// ==========================================================================
+const examState = {
+  timerInterval: null,
+  secondsRemaining: 0,
+  userAnswers: {},
+  isSubmitted: false
+};
+
+function startTimedQuiz(minutes) {
+  examState.secondsRemaining = minutes * 60;
+  examState.isSubmitted = false;
+  examState.userAnswers = {};
+
+  const display = document.getElementById('quiz-timer-display');
+  const banner = document.getElementById('exam-scorecard-banner');
+  if (banner) banner.style.display = 'none';
+
+  // Hide all answer keys
+  document.querySelectorAll('.mcq-reveal-box').forEach(box => {
+    box.style.display = 'none';
+  });
+
+  if (examState.timerInterval) clearInterval(examState.timerInterval);
+
+  showNotificationToast(`Started ${minutes}-minute timed exam! Answers will be scored upon submission.`);
+
+  function updateTimer() {
+    const mins = Math.floor(examState.secondsRemaining / 60);
+    const secs = examState.secondsRemaining % 60;
+    if (display) {
+      display.textContent = `Time Remaining: ${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      if (examState.secondsRemaining <= 60) {
+        display.style.color = '#e53e3e';
+      } else {
+        display.style.color = 'var(--ink)';
+      }
+    }
+
+    if (examState.secondsRemaining <= 0) {
+      clearInterval(examState.timerInterval);
+      showNotificationToast("Time is up! Submitting answers automatically.");
+      submitExamForGrading();
+    } else {
+      examState.secondsRemaining--;
+    }
+  }
+
+  updateTimer();
+  examState.timerInterval = setInterval(updateTimer, 1000);
+}
+
+function submitExamForGrading() {
+  if (examState.timerInterval) clearInterval(examState.timerInterval);
+  examState.isSubmitted = true;
+
+  if (!appState.lastResult?.content) return;
+  const parsed = parseStudyPackContent(appState.lastResult.content);
+  const mcqs = parsed.mcqs || [];
+  if (mcqs.length === 0) {
+    showNotificationToast("No quiz questions to grade.");
+    return;
+  }
+
+  let correctCount = 0;
+  mcqs.forEach((mcq, idx) => {
+    const num = idx + 1;
+    // Reveal answer key box
+    const box = document.getElementById(`mcq-reveal-${num}`);
+    if (box) box.style.display = 'block';
+
+    const selectedBtn = document.querySelector(`.mcq-card:nth-child(${num}) .mcq-option-btn.selected`);
+    const selectedLetter = selectedBtn ? selectedBtn.getAttribute('data-letter') : '';
+    const cleanCorrect = (mcq.correct || '').toUpperCase().trim();
+
+    if (selectedLetter && cleanCorrect.startsWith(selectedLetter)) {
+      correctCount++;
+    }
+  });
+
+  const percent = Math.round((correctCount / mcqs.length) * 100);
+  let grade = 'A';
+  let desc = 'Outstanding master of course materials!';
+  if (percent < 60) {
+    grade = 'C';
+    desc = 'Needs review. Re-read the Key Concepts and Summary sections above.';
+  } else if (percent < 80) {
+    grade = 'B';
+    desc = 'Solid understanding with a few missed questions. Review the answer keys below.';
+  }
+
+  const banner = document.getElementById('exam-scorecard-banner');
+  const gradeBadge = document.getElementById('exam-grade-badge');
+  const title = document.getElementById('exam-score-title');
+  const descEl = document.getElementById('exam-score-desc');
+  const timerDisplay = document.getElementById('quiz-timer-display');
+
+  if (gradeBadge) gradeBadge.textContent = `GRADE: ${grade}`;
+  if (title) title.textContent = `Score: ${correctCount} / ${mcqs.length} (${percent}%)`;
+  if (descEl) descEl.textContent = desc;
+  if (banner) banner.style.display = 'block';
+  if (timerDisplay) timerDisplay.textContent = 'Exam Finished';
+
+  banner.scrollIntoView({ behavior: 'smooth' });
+  showNotificationToast(`Exam graded: ${correctCount}/${mcqs.length} (${percent}%)`);
+}
+
+
+// ==========================================================================
+// FEATURE 6: "ASK AI ABOUT THIS STUDY PACK" (MINI Q&A SIDEBAR DRAWER)
+// ==========================================================================
+function toggleAskAiDrawer() {
+  const drawer = document.getElementById('ask-ai-drawer');
+  const backdrop = document.getElementById('ask-ai-backdrop');
+  if (!drawer) return;
+
+  const isOpen = drawer.style.right === '0px';
+  if (isOpen) {
+    drawer.style.right = '-460px';
+    if (backdrop) backdrop.style.display = 'none';
+  } else {
+    drawer.style.right = '0px';
+    if (backdrop) backdrop.style.display = 'block';
+    setTimeout(() => {
+      document.getElementById('ask-ai-input')?.focus();
+    }, 300);
+  }
+}
+
+async function submitAskAiQuestion() {
+  const input = document.getElementById('ask-ai-input');
+  const btn = document.getElementById('btn-submit-ask-ai');
+  const messagesContainer = document.getElementById('ask-ai-messages');
+  if (!input || !input.value.trim()) return;
+
+  const question = input.value.trim();
+  input.value = '';
+
+  // Append user message bubble
+  const userBubble = document.createElement('div');
+  userBubble.style.cssText = 'align-self:flex-end; background:var(--ink); color:var(--white); padding:0.75rem 1rem; border-radius:12px; font-size:0.86rem; max-width:85%;';
+  userBubble.textContent = question;
+  messagesContainer.appendChild(userBubble);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+  // Append thinking bubble
+  const aiBubble = document.createElement('div');
+  aiBubble.style.cssText = 'align-self:flex-start; background:var(--card-cream); border:1px solid var(--line); padding:0.85rem 1rem; border-radius:12px; font-size:0.86rem; max-width:90%; line-height:1.5;';
+  aiBubble.textContent = 'Thinking...';
+  messagesContainer.appendChild(aiBubble);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+  if (btn) btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/study-pack/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        question: question,
+        content: appState.lastResult?.content || '',
+        notes: appState.currentNotes || ''
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'AI answer failed');
+    }
+
+    aiBubble.innerHTML = marked.parse(stripEmojis(data.answer));
+  } catch (err) {
+    aiBubble.textContent = `Error: ${err.message}`;
+  } finally {
+    if (btn) btn.disabled = false;
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
   }
 }
