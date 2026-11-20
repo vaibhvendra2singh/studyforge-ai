@@ -284,7 +284,20 @@
               </div>
             </div>
           </div>
-          <pre id="raw-template-code" style="background:#09090b !important; color:#fafafa !important; padding:1.5rem; border:1px solid #27272a; border-radius:12px; font-size:0.86rem; font-family:'JetBrains Mono', monospace; overflow-x:auto; white-space:pre-wrap; line-height:1.65; min-height:180px;">Loading prompt template...</pre>
+          <pre id="raw-template-code" style="background:#09090b !important; color:#fafafa !important; padding:1.5rem; border:1px solid #27272a; border-radius:12px; font-size:0.86rem; font-family:'JetBrains Mono', monospace; overflow-x:auto; white-space:pre-wrap; line-height:1.65; min-height:180px;">You are a helpful study assistant. Read the following lecture notes and create a study pack.
+
+Difficulty: Intermediate
+
+Lecture Notes:
+[Your lecture notes will be inserted here]
+
+Please provide:
+1. A summary
+2. Key concepts
+3. Definitions
+4. MCQ questions with answers
+5. Short answer questions
+</pre>
         </div>
       </div>
   </div>
@@ -292,11 +305,11 @@
 
 <!-- Modal & Toast -->
 <div class="toast-msg" id="toast-notification"> Done</div>
-<script src="/static/js/main.js?v=17.0"></script>
+<script src="/static/js/main.js?v=18.0"></script>
 
 <script>
   let labDifficulty = 'Intermediate';
-  let labTemplates = {};
+  let labTemplates = {"v1": {"name": "Basic Prompt", "full_prompt": "You are a helpful study assistant. Read the following lecture notes and create a study pack.\n\nDifficulty: Intermediate\n\nLecture Notes:\n[Your lecture notes will be inserted here]\n\nPlease provide:\n1. A summary\n2. Key concepts\n3. Definitions\n4. MCQ questions with answers\n5. Short answer questions\n"}, "v2": {"name": "Constraint-Based Prompt", "full_prompt": "You are an expert academic tutor specializing in creating structured study materials.\n\nTASK: Transform the provided lecture notes into a comprehensive study pack.\nDIFFICULTY LEVEL: Intermediate\nLANGUAGE: Clear, academic English suitable for university students.\n\nCONSTRAINTS:\n- Summary must be 150\u2013200 words maximum.\n- List exactly 5\u20138 key concepts, each with a one-sentence explanation.\n- Provide exactly 5 definitions in \"Term: Definition\" format.\n- Generate exactly 5 distinct Multiple Choice Questions (numbered Q1 to Q5).\n- Each MCQ must have exactly 4 choices (A, B, C, D) on separate lines.\n- Do NOT put ticks, checkmarks, or answers on the option lines. Keep all 4 options completely neutral and clean.\n- Place the correct answer and brief explanation strictly on the separate \"Correct Answer:\" line below each question.\n- Generate exactly 3 short-answer questions with model answers (2\u20134 sentences each).\n- Ground all content in the provided lecture notes and topic. If the input is brief or presents a topic outline (e.g. 'explain photosynthesis in detail'), synthesize foundational academic curriculum facts to produce a complete, thorough study pack.\n- Ensure every single section below is fully populated with accurate, high-quality academic content.\n- Do NOT include any emojis anywhere in your output. Use clean, plain academic text only.\n\nOUTPUT FORMAT (use exactly these headers):\n## Summary\n[150\u2013200 word summary here]\n\n## Key Concepts\n- **Concept Name**: One-sentence explanation\n\n## Definitions\n- **Term**: Definition\n\n## Multiple Choice Questions\n**Q1.** [Question text]\nA) [Option A]\nB) [Option B]\nC) [Option C]\nD) [Option D]\nCorrect Answer: [Letter] \u2014 [Brief explanation]\n\n**Q2.** [Question text]\nA) [Option A]\nB) [Option B]\nC) [Option C]\nD) [Option D]\nCorrect Answer: [Letter] \u2014 [Brief explanation]\n\n## Short Answer Questions\n**Q1.** [Question]\nModel Answer: [2\u20134 sentence answer]\n\n---\n\nLECTURE NOTES:\n[Your lecture notes will be inserted here]\n"}, "v3": {"name": "Multi-Step Workflow Prompt", "full_prompt": "You are a senior academic curriculum designer. You will process lecture notes in THREE explicit steps before producing the final study pack.\n\nDIFFICULTY: Intermediate\n\nSTEP 1 \u2014 COMPREHENSION ANALYSIS (think silently, do not output this):\n- Identify the main topic and sub-topics.\n- Note any technical terms or concepts.\n- Assess completeness of the notes.\n\nSTEP 2 \u2014 CONTENT PLANNING (think silently, do not output this):\n- Plan the summary structure.\n- Select the most important concepts for the difficulty level.\n- Design 5 MCQs that test understanding, not just recall.\n- For Advanced: include application/analysis questions.\n- For Intermediate: balance recall and application.\n- For Beginner: focus on core recall and understanding.\n- Design 3 short-answer questions tailored to Intermediate level.\n\nSTEP 3 \u2014 FINAL GENERATION (produce this output):\n\nBegin your response with this line:\n[ANALYSIS COMPLETE \u2014 Generating Intermediate-level study pack]\n\nThen produce the study pack using these exact headers:\n\n## Summary\n[Concise 150\u2013200 word summary capturing the core ideas]\n\n## Key Concepts  \n[5\u20138 bullet points: **Term**: explanation tailored to Intermediate level]\n\n## Definitions\n[5 definitions relevant to the difficulty level]\n\n## Multiple Choice Questions\n**Q1.** [Question text]\nA) [Option A]\nB) [Option B]\nC) [Option C]\nD) [Option D]\nCorrect Answer: [Letter] \u2014 [Brief explanation]\n\n**Q2.** [Question text]\nA) [Option A]\nB) [Option B]\nC) [Option C]\nD) [Option D]\nCorrect Answer: [Letter] \u2014 [Brief explanation]\n\n## Short Answer Questions\n**Q1.** [Question text]\nModel Answer: [2\u20134 sentence answer adjusted for Intermediate level]\n\n**Q2.** [Question text]\nModel Answer: [2\u20134 sentence answer adjusted for Intermediate level]\n\n## Responsible AI Notice\n[1\u20132 sentences noting that this content is AI-generated and should be verified against course materials]\n\nIMPORTANT INSTRUCTIONS:\n- Ground the study pack in the provided lecture notes. If the input is brief or presents a topic outline, draw upon foundational academic curriculum facts to produce a complete, thorough study pack.\n- Always generate all required sections (Summary, Key Concepts, Definitions, MCQs, Short Answers) with complete, detailed academic content.\n- Never leave sections blank or substitute placeholders.\n- Do NOT use any emojis anywhere in your output. Use clean, plain academic text only.\n\nLECTURE NOTES:\n[Your lecture notes will be inserted here]\n"}};
   const labResults = { v1: null, v2: null, v3: null };
 
   // Character counter
