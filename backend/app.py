@@ -55,11 +55,11 @@ def settings_page():
 
 @app.route("/prompt-lab")
 def prompt_lab():
-    return render_template("prompt_lab.html")
+    return render_template("index.html")
 
 @app.route("/evaluation")
 def evaluation():
-    return render_template("evaluation.html")
+    return render_template("index.html")
 
 @app.route("/api/health", methods=["GET"])
 def health_check():

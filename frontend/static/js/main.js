@@ -64,10 +64,6 @@ function initRouting() {
   const hash = window.location.hash.replace('#', '');
   const path = window.location.pathname;
 
-  if (path === '/prompt-lab' || path === '/evaluation') {
-    return; // These are separate server-rendered pages, do not interfere.
-  }
-
   // Check if there is an active study pack to open from Prompt Lab or library
   const pendingPackStr = localStorage.getItem('studyforge_open_pack');
   if (pendingPackStr) {
@@ -89,14 +85,15 @@ function initRouting() {
   }
 
   // Respect the path or hash on page load
-  if (path === '/generate' || hash === 'generator') {
-    history.replaceState(null, '', '/#generator');
+  if (path === '/prompt-lab' || hash === 'lab') {
+    switchView('lab', false);
+  } else if (path === '/evaluation' || hash === 'evaluation') {
+    switchView('evaluation', false);
+  } else if (path === '/generate' || hash === 'generator') {
     switchView('generator', false);
   } else if (path === '/library' || hash === 'library') {
-    history.replaceState(null, '', '/#library');
     switchView('library', false);
   } else if (path === '/settings' || hash === 'settings') {
-    history.replaceState(null, '', '/#settings');
     switchView('settings', false);
   } else if (hash === 'results') {
     if (appState.lastResult) {
@@ -105,11 +102,9 @@ function initRouting() {
     } else if (appState.libraryPacks && appState.libraryPacks.length > 0) {
       loadSavedPack(appState.libraryPacks[0].id);
     } else {
-      history.replaceState(null, '', '/#generator');
       switchView('generator', false);
     }
   } else {
-    history.replaceState(null, '', '/#dashboard');
     switchView('dashboard', false);
   }
 
@@ -133,8 +128,26 @@ function initRouting() {
         return;
       }
     }
-    if (['dashboard', 'generator', 'results', 'library', 'settings'].includes(currentHash)) {
+    if (['dashboard', 'generator', 'results', 'library', 'settings', 'lab', 'evaluation'].includes(currentHash)) {
       switchView(currentHash, false);
+    }
+  });
+
+  window.addEventListener('popstate', () => {
+    const currentPath = window.location.pathname;
+    const currentHash = window.location.hash.replace('#', '');
+    if (currentPath === '/prompt-lab' || currentHash === 'lab') {
+      switchView('lab', false);
+    } else if (currentPath === '/evaluation' || currentHash === 'evaluation') {
+      switchView('evaluation', false);
+    } else if (currentPath === '/generate' || currentHash === 'generator') {
+      switchView('generator', false);
+    } else if (currentPath === '/library' || currentHash === 'library') {
+      switchView('library', false);
+    } else if (currentHash === 'results') {
+      switchView('results', false);
+    } else {
+      switchView('dashboard', false);
     }
   });
 }
@@ -143,7 +156,19 @@ function switchView(viewName, updateHash = true) {
   appState.currentView = viewName;
   
   if (updateHash) {
-    window.location.hash = viewName;
+    if (viewName === 'lab') {
+      history.pushState(null, '', '/prompt-lab');
+    } else if (viewName === 'evaluation') {
+      history.pushState(null, '', '/evaluation');
+    } else if (viewName === 'dashboard') {
+      history.pushState(null, '', '/');
+    } else if (viewName === 'generator') {
+      history.pushState(null, '', '/generate');
+    } else if (viewName === 'library') {
+      history.pushState(null, '', '/library');
+    } else {
+      window.location.hash = viewName;
+    }
   }
 
   // Hide all views
@@ -157,7 +182,15 @@ function switchView(viewName, updateHash = true) {
     target.style.display = 'block';
   }
 
-  // Update active navigation buttons (floating pill navbar & sidebar)
+  // Update active navigation buttons (wheel nav & floating pill navbar & sidebar)
+  document.querySelectorAll('.wheel-item').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  const activeWheel = document.getElementById(`wheel-nav-${viewName}`);
+  if (activeWheel) {
+    activeWheel.classList.add('active');
+  }
+
   document.querySelectorAll('.pill-nav-item, .sidebar-nav-item').forEach(btn => {
     btn.classList.remove('active');
   });
@@ -178,7 +211,9 @@ function switchView(viewName, updateHash = true) {
       generator: 'Preparation',
       results: 'Results & Quiz',
       library: 'Saved Study Packs',
-      settings: 'Settings'
+      settings: 'Settings',
+      lab: 'Prompt Lab',
+      evaluation: 'Evaluation'
     };
     breadcrumb.textContent = names[viewName] || viewName;
   }
@@ -186,18 +221,25 @@ function switchView(viewName, updateHash = true) {
   // If opening dashboard, refresh metrics and benchmark
   if (viewName === 'dashboard') {
     updateDashboardMetrics();
-  }
-
-  // If opening library, render fresh cards and subject filters
-  if (viewName === 'library') {
+  } else if (viewName === 'library') {
     renderSubjectFilters();
     renderLibrary();
+  } else if (viewName === 'evaluation') {
+    if (typeof fetchLiveEvaluations === 'function') {
+      fetchLiveEvaluations();
+    }
+  } else if (viewName === 'lab') {
+    if (typeof showTemplate === 'function') {
+      showTemplate(typeof currentInspectorVersion !== 'undefined' ? currentInspectorVersion : 'v1');
+    }
   }
 
   // Close mobile drawer if open
   closeMobileMenu();
 
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (window.scrollY > 80) {
+    window.scrollTo(0, 0);
+  }
 }
 
 // ── MOBILE MENU MANAGEMENT (SECTION 14) ───────────────────────────────────
@@ -1588,9 +1630,20 @@ function initEventListeners() {
     toggleMotionPreference(true);
   }
 
-  // Floating nav hover animation & container shift across all views
+  // Floating & Wheel nav hover animation & container shift across all views
+  const wheelNav = document.getElementById('wheel-nav');
   const pillNav = document.querySelector('.floating-pill-nav');
   const appContainer = document.querySelector('.app-container');
+
+  if (wheelNav && appContainer) {
+    wheelNav.addEventListener('mouseenter', () => {
+      document.body.classList.add('wheel-nav-hovered');
+    });
+    wheelNav.addEventListener('mouseleave', () => {
+      document.body.classList.remove('wheel-nav-hovered');
+    });
+  }
+
   if (pillNav && appContainer) {
     pillNav.addEventListener('mouseenter', () => {
       document.body.classList.add('nav-is-hovered');
@@ -2019,3 +2072,34 @@ async function submitAskAiQuestion() {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
   }
 }
+
+
+// ==========================================================================
+// SEMI-CIRCLE ROTATING WHEEL NAVIGATION CONTROLLER
+// ==========================================================================
+function toggleWheelNav() {
+  const container = document.getElementById('wheel-nav');
+  if (container) {
+    const isOpen = container.classList.toggle('open');
+    document.body.classList.toggle('wheel-nav-open', isOpen);
+  }
+}
+
+function closeWheelIfMobile() {
+  const container = document.getElementById('wheel-nav');
+  if (container && window.innerWidth <= 768) {
+    container.classList.remove('open');
+    document.body.classList.remove('wheel-nav-open');
+  }
+}
+
+// Click outside to close wheel if it was toggled open via click
+document.addEventListener('click', (e) => {
+  const container = document.getElementById('wheel-nav');
+  if (container && container.classList.contains('open')) {
+    if (!container.contains(e.target)) {
+      container.classList.remove('open');
+      document.body.classList.remove('wheel-nav-open');
+    }
+  }
+});

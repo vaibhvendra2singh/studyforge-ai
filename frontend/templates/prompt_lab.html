@@ -5,70 +5,68 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Prompt Lab — StudyForge AI</title>
   <meta name="description" content="Side-by-side prompt engineering comparison bench. Benchmark V1 Basic, V2 Structured, and V3 Multi-Step prompts." />
-  <link rel="stylesheet" href="/static/css/main.css?v=2.3" />
+  <link rel="stylesheet" href="/static/css/main.css?v=2.9" />
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
 
 <!-- ── FLOATING PILL NAVBAR ─────────────────────────────────────────── -->
-<nav class="floating-pill-nav" aria-label="Main Navigation">
-  <a href="/" class="pill-brand">
-    <div class="pill-logo-spark">
-      <svg viewBox="0 0 24 24"><path d="M12 2L13.8 9.2L21 11L13.8 12.8L12 20L10.2 12.8L3 11L10.2 9.2L12 2Z"/></svg>
+<!-- ── SEMI-CIRCLE ROTATING WHEEL NAVIGATION (RETRACTABLE) ── -->
+<div class="wheel-nav-container" id="wheel-nav" aria-label="Rotating Wheel Navigation">
+  
+  <!-- Central Hub Toggle (Click to spin open / retract) -->
+  <button class="wheel-hub-toggle" id="wheel-toggle-btn" onclick="toggleWheelNav()" aria-label="Toggle Wheel Navigation">
+    <svg class="wheel-hub-icon" viewBox="0 0 24 24"><path d="M12 2L13.8 9.2L21 11L13.8 12.8L12 20L10.2 12.8L3 11L10.2 9.2L12 2Z"/></svg>
+    <div class="wheel-hub-dots">
+      <div class="wheel-hub-dot"></div>
+      <div class="wheel-hub-dot"></div>
+      <div class="wheel-hub-dot"></div>
     </div>
-    <span>studyforge</span>
-  </a>
+  </button>
 
-  <!-- Large Expanded Logo (Visible on Hover) -->
-  <div class="sidebar-large-logo">
-    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#ffffff" />
-          <stop offset="100%" stop-color="#666666" />
-        </linearGradient>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-          <feMerge>
-            <feMergeNode in="coloredBlur"/>
-            <feMergeNode in="SourceGraphic"/>
-          </feMerge>
-        </filter>
-      </defs>
-      <path d="M50 15L85 35V65L50 85L15 65V35L50 15Z" stroke="url(#logo-gradient)" stroke-width="2" fill="rgba(255,255,255,0.02)"/>
-      <path d="M50 15L50 85M15 35L85 65M15 65L85 35" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
-      <circle cx="50" cy="50" r="12" fill="url(#logo-gradient)" filter="url(#glow)" />
-      <path d="M50 38L55 45H63L57 50L59 58L50 53L41 58L43 50L37 45H45L50 38Z" fill="#111" />
-    </svg>
-  </div>
+  <!-- The Rotating Disk containing radial menu items -->
+  <div class="wheel-disk" id="wheel-disk">
+    
+    <!-- Central Brand Spark -->
+    <div class="wheel-center-brand">
+      <svg viewBox="0 0 24 24"><path d="M12 2L13.8 9.2L21 11L13.8 12.8L12 20L10.2 12.8L3 11L10.2 9.2L12 2Z"/></svg>
+      <span>FORGE</span>
+    </div>
 
-  <div class="pill-links">
-    <a href="/" class="pill-nav-item">
+    <!-- Radial Wheel Nav Items (Trigonometrically placed on arc) -->
+    <!-- 1: Home -->
+    <a class="wheel-item wheel-pos-1" id="wheel-nav-dashboard" href="/" aria-label="Home">
       <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-      <span>Home</span>
+      <span class="wheel-item-label">Home</span>
     </a>
 
-    <a href="/generate" class="pill-nav-item">
+    <!-- 2: Preparation -->
+    <a class="wheel-item wheel-pos-2" id="wheel-nav-generator" href="/generate" aria-label="Preparation">
       <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-      <span>Preparation</span>
+      <span class="wheel-item-label">Preparation</span>
     </a>
 
-    <a href="/prompt-lab" class="pill-nav-item active">
+    <!-- 3: Prompt Lab -->
+    <a href="/prompt-lab" class="wheel-item wheel-pos-3 active" id="wheel-nav-lab" aria-label="Prompt Lab">
       <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
-      <span>Prompt Lab</span>
+      <span class="wheel-item-label">Prompt Lab</span>
     </a>
 
-    <a href="/evaluation" class="pill-nav-item">
+    <!-- 4: Evaluation -->
+    <a href="/evaluation" class="wheel-item wheel-pos-4" id="wheel-nav-evaluation" aria-label="Evaluation">
       <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-      <span>Evaluation</span>
+      <span class="wheel-item-label">Evaluation</span>
     </a>
 
-    <a href="/library" class="pill-nav-item">
+    <!-- 5: Library -->
+    <a class="wheel-item wheel-pos-5" id="wheel-nav-library" href="/library" aria-label="Library">
       <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-      <span>Library</span>
+      <span class="wheel-item-label">Library</span>
     </a>
+
   </div>
-</nav>
+</div>
+
 
 <div class="app-container anim-slide-down">
   <div style="max-width: 100%; width: 100%; margin: 0;">
@@ -81,48 +79,33 @@
         </p>
       </div>
 
-      <!-- 3 Prompt Cards with Individual Run Buttons -->
+      <!-- 3 Prompt Strategy Cards -->
       <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:1.25rem; margin-bottom:2rem;">
-        <div class="paper-card card-cream" style="display:flex; flex-direction:column; justify-content:space-between;">
-          <div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-              <span class="stamp">VERSION 1</span>
-              <span class="font-mono" style="font-size:0.72rem;">BASIC</span>
-            </div>
-            <h3 style="margin-bottom:0.35rem;">Basic</h3>
-            <p style="font-size:0.82rem; margin:0 0 1rem 0; line-height:1.6;">A simple instruction. See what the AI does without strict rules or structure.</p>
+        <div class="paper-card card-cream">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+            <span class="stamp">VERSION 1</span>
+            <span class="font-mono" style="font-size:0.72rem;">BASIC</span>
           </div>
-          <button class="btn btn-secondary btn-sm" id="btn-card-v1" style="width:100%; font-weight:600;" onclick="runPromptAndOpenPage('v1')">
-            Run V1 (Open Full Page)
-          </button>
+          <h3 style="margin-bottom:0.35rem;">Basic</h3>
+          <p style="font-size:0.82rem; margin:0; line-height:1.6;">A simple instruction. See what the AI does without strict rules or structure.</p>
         </div>
 
-        <div class="paper-card card-cream" style="display:flex; flex-direction:column; justify-content:space-between;">
-          <div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-              <span class="stamp">VERSION 2</span>
-              <span class="font-mono" style="font-size:0.72rem;">STRICT</span>
-            </div>
-            <h3 style="margin-bottom:0.35rem;">Strict Rules</h3>
-            <p style="font-size:0.82rem; margin:0 0 1rem 0; line-height:1.6;">The AI must follow a strict format and exactly match your target difficulty and questions.</p>
+        <div class="paper-card card-cream">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+            <span class="stamp">VERSION 2</span>
+            <span class="font-mono" style="font-size:0.72rem;">STRICT</span>
           </div>
-          <button class="btn btn-secondary btn-sm" id="btn-card-v2" style="width:100%; font-weight:600;" onclick="runPromptAndOpenPage('v2')">
-            Run V2 (Open Full Page)
-          </button>
+          <h3 style="margin-bottom:0.35rem;">Strict Rules</h3>
+          <p style="font-size:0.82rem; margin:0; line-height:1.6;">The AI must follow a strict format and exactly match your target difficulty and questions.</p>
         </div>
 
-        <div class="paper-card card-cream" style="display:flex; flex-direction:column; justify-content:space-between;">
-          <div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-              <span class="stamp">VERSION 3</span>
-              <span class="font-mono" style="font-size:0.72rem;">SMART</span>
-            </div>
-            <h3 style="margin-bottom:0.35rem;">Smart Thinking</h3>
-            <p style="font-size:0.82rem; margin:0 0 1rem 0; line-height:1.6;">The AI takes its time to plan and think step-by-step before synthesizing the best study pack.</p>
+        <div class="paper-card card-cream">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+            <span class="stamp">VERSION 3</span>
+            <span class="font-mono" style="font-size:0.72rem;">SMART</span>
           </div>
-          <button class="btn btn-primary btn-sm" id="btn-card-v3" style="width:100%; font-weight:700;" onclick="runPromptAndOpenPage('v3')">
-            Run V3 Smart (Open Full Page)
-          </button>
+          <h3 style="margin-bottom:0.35rem;">Smart Thinking</h3>
+          <p style="font-size:0.82rem; margin:0; line-height:1.6;">The AI takes its time to plan and think step-by-step before synthesizing the best study pack.</p>
         </div>
       </div>
 
@@ -305,7 +288,7 @@ Please provide:
 
 <!-- Modal & Toast -->
 <div class="toast-msg" id="toast-notification"> Done</div>
-<script src="/static/js/main.js?v=20.0"></script>
+<script src="/static/js/main.js?v=23.0"></script>
 
 <script>
   let labDifficulty = 'Intermediate';

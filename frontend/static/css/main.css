@@ -452,15 +452,19 @@ code, pre, .font-mono {
 .app-container {
   max-width: 100%;
   margin: 0;
-  padding: 1.75rem 3rem 5rem 6.5rem;
+  padding: 1.75rem 3rem 5rem 5.5rem;
   position: relative;
   z-index: 2;
-  transition: padding-left 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: padding-left 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .floating-pill-nav:hover ~ .app-container,
-body.nav-is-hovered .app-container {
-  padding-left: 17.5rem !important;
+body.nav-is-hovered .app-container,
+.wheel-nav-container:hover ~ .app-container,
+.wheel-nav-container.open ~ .app-container,
+body.wheel-nav-open .app-container,
+body.wheel-nav-hovered .app-container {
+  padding-left: 17rem !important;
 }
 
 .sub-breadcrumb-bar {
@@ -594,15 +598,20 @@ body.nav-is-hovered .app-container {
 @media (max-width: 900px) { .mosaic-backdrop { display: none; } }
 
 /* ──────────────────────────────────────────────────────────────────────────
-   8. ENTRANCE ANIMATIONS
+   8. ENTRANCE ANIMATIONS (FAST & FLICKER-FREE)
    ────────────────────────────────────────────────────────────────────────── */
-.anim-slide-down { animation: headerSlide 0.95s cubic-bezier(0.16, 1, 0.3, 1) both; }
-@keyframes headerSlide { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+.anim-slide-down {
+  animation: fadeInQuick 0.15s ease-out both;
+}
+@keyframes fadeInQuick {
+  from { opacity: 0.92; }
+  to { opacity: 1; }
+}
 
-.anim-rise { animation: lineRise 1s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.anim-rise-d1 { animation-delay: 0.085s; }
-.anim-rise-d2 { animation-delay: 0.17s; }
-.anim-rise-d3 { animation-delay: 0.255s; }
+.anim-rise { animation: lineRise 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.anim-rise-d1 { animation-delay: 0.04s; }
+.anim-rise-d2 { animation-delay: 0.08s; }
+.anim-rise-d3 { animation-delay: 0.12s; }
 
 @keyframes lineRise { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -796,6 +805,18 @@ textarea.form-control { min-height: 160px; resize: vertical; }
 
 .view-panel {
   position: relative;
+  animation: panelFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes panelFadeIn {
+  from {
+    opacity: 0.85;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .metrics-grid {
@@ -1121,3 +1142,254 @@ textarea.form-control { min-height: 160px; resize: vertical; }
   .metrics-grid { grid-template-columns: 1fr; }
   .hero-editorial h1 { font-size: 2.1rem; }
 }
+/* ──────────────────────────────────────────────────────────────────────────
+   SEMI-CIRCLE ROTATING WHEEL NAVIGATION (SNUG DIAL - MINIMAL EMPTY SPACE)
+   ────────────────────────────────────────────────────────────────────────── */
+.wheel-nav-container {
+  position: fixed;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  width: 65px;
+  height: 370px;
+  z-index: 99999;
+  pointer-events: none;
+  transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.wheel-nav-container.open,
+.wheel-nav-container:hover {
+  width: 250px;
+  pointer-events: auto;
+}
+
+/* The central clickable hub tab pinned to the left edge */
+.wheel-hub-toggle {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 110px;
+  background: #09090b;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-left: none;
+  border-radius: 0 55px 55px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.35);
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  z-index: 10;
+}
+
+.wheel-hub-toggle:hover {
+  background: #18181b;
+  width: 54px;
+  box-shadow: 6px 0 24px rgba(0, 0, 0, 0.5);
+}
+
+.wheel-hub-icon {
+  width: 20px;
+  height: 20px;
+  fill: #fafafa;
+  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.wheel-nav-container.open .wheel-hub-icon {
+  transform: rotate(180deg);
+}
+
+.wheel-hub-dots {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.wheel-hub-dot {
+  width: 4px;
+  height: 4px;
+  background: #a1a1aa;
+  border-radius: 50%;
+}
+
+/* The rotating semi-circle wheel disk (Snug 370px diameter - eliminates dead space) */
+.wheel-disk {
+  position: absolute;
+  top: 50%;
+  left: -185px;
+  transform: translateY(-50%) rotate(-90deg) scale(0.6);
+  width: 370px;
+  height: 370px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, #18181b 30%, #09090b 85%);
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 35px rgba(0, 0, 0, 0.65);
+  pointer-events: none;
+  opacity: 0;
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.35s ease;
+  transform-origin: center center;
+}
+
+.wheel-nav-container.open .wheel-disk,
+.wheel-nav-container:hover .wheel-disk {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(-50%) rotate(0deg) scale(1);
+}
+
+/* Inner concentric orbit rings tailored snugly to item path */
+.wheel-disk::before {
+  content: '';
+  position: absolute;
+  top: 35px;
+  left: 35px;
+  right: 35px;
+  bottom: 35px;
+  border-radius: 50%;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+}
+
+.wheel-disk::after {
+  content: '';
+  position: absolute;
+  top: 85px;
+  left: 85px;
+  right: 85px;
+  bottom: 85px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  pointer-events: none;
+}
+
+/* Center brand indicator inside the wheel disk */
+.wheel-center-brand {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+}
+
+.wheel-center-brand svg {
+  width: 24px;
+  height: 24px;
+  fill: #ffffff;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.4));
+}
+
+.wheel-center-brand span {
+  display: block;
+  font-size: 0.64rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #71717a;
+  font-family: 'JetBrains Mono', monospace;
+  margin-top: 2px;
+}
+
+/* Navigation items placed along the semi-circle arc */
+.wheel-item {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #27272a;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fafafa;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.2s, border-color 0.2s, color 0.2s;
+  pointer-events: auto;
+}
+
+.wheel-item svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 2;
+  transition: transform 0.25s ease;
+}
+
+.wheel-item:hover {
+  background: #ffffff;
+  color: #000000;
+  border-color: #ffffff;
+  transform: scale(1.18);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.4);
+}
+
+.wheel-item:hover svg {
+  stroke: #000000;
+  transform: scale(1.1);
+}
+
+.wheel-item.active {
+  background: #ffffff;
+  color: #000000;
+  border-color: #ffffff;
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.35);
+}
+
+.wheel-item.active svg {
+  stroke: #000000;
+}
+
+/* Tooltip labels for wheel items */
+.wheel-item-label {
+  position: absolute;
+  left: 54px;
+  background: #09090b;
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  font-family: system-ui, -apple-system, sans-serif;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.wheel-item:hover .wheel-item-label {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Trigonometric positioning on radius R = 150px from disk center (185, 185) */
+/* Uniform 13px distance from rim across all items - zero wasted empty space */
+.wheel-pos-1 { top: 39px; left: 247px; }
+.wheel-pos-2 { top: 93px; left: 295px; }
+.wheel-pos-3 { top: 163px; left: 313px; }
+.wheel-pos-4 { top: 233px; left: 295px; }
+.wheel-pos-5 { top: 287px; left: 247px; }
+
+/* Responsive wheel navigation behavior */
+@media (max-width: 768px) {
+  .app-container {
+    padding-left: 4.5rem !important;
+  }
+  .wheel-nav-container:hover ~ .app-container,
+  .wheel-nav-container.open ~ .app-container,
+  body.wheel-nav-open .app-container,
+  body.wheel-nav-hovered .app-container {
+    padding-left: 4.5rem !important;
+  }
+}
+
