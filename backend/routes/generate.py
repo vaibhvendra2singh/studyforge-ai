@@ -6,7 +6,7 @@ import json
 import urllib.parse
 import urllib.request
 import re
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, Response, send_file
 from utils.groq_client import PROMPT_VERSIONS, call_groq
 from utils.validators import validate_notes, validate_difficulty, validate_prompt_version, sanitize_notes
 from utils.pdf_parser import extract_text_from_pdf
@@ -318,3 +318,116 @@ def generate_study_pack_stream():
         yield "data: [DONE]\n\n"
 
     return Response(generate(), content_type='text/event-stream')
+
+
+@generate_bp.route("/generate/pdf", methods=["POST"])
+def export_study_pack_pdf():
+    """
+    Server-side native vector PDF generation using PyMuPDF.
+    Produces crisp, selectable text, full page width, zero cutoffs, no browser canvas quirks.
+    """
+    import fitz
+    import re
+    from io import BytesIO
+
+    try:
+        data = request.get_json(force=True)
+    except Exception:
+        return jsonify({"error": "Invalid request payload"}), 400
+
+    subject = data.get("subject") or data.get("title") or "Study Pack"
+    difficulty = (data.get("difficulty") or "Intermediate").upper()
+    content = data.get("content") or ""
+
+    if not content.strip():
+        return jsonify({"error": "No content provided to generate PDF."}), 400
+
+    # Clean emojis & banners
+    clean_content = re.sub(r"[𐀀-􏿿]", "", content)
+    clean_content = re.sub(r"\[ANALYSIS COMPLETE[^\]]*\]", "", clean_content).strip()
+
+    doc = fitz.open()
+    page_w = 595.3  # A4 width in points
+    page_h = 841.9  # A4 height in points
+    margin = 42.0
+    content_w = page_w - (margin * 2)
+
+    def add_page():
+        return doc.new_page(width=page_w, height=page_h)
+
+    page = add_page()
+    y = margin
+
+    # Header section
+    subj_title = f"STUDYFORGE AI - {subject.upper()}"[:45]
+    page.insert_text(fitz.Point(margin, y + 15), subj_title, fontsize=13, fontname="helv", color=(0, 0, 0))
+    diff_w = fitz.get_text_length(difficulty, fontname="helv", fontsize=8.5)
+    badge_rect = fitz.Rect(page_w - margin - diff_w - 14, y + 2, page_w - margin, y + 18)
+    page.draw_rect(badge_rect, color=(0, 0, 0), fill=(0, 0, 0))
+    page.insert_text(fitz.Point(page_w - margin - diff_w - 7, y + 13), difficulty, fontsize=8.5, fontname="helv", color=(1, 1, 1))
+    y += 24
+    page.draw_line(fitz.Point(margin, y), fitz.Point(page_w - margin, y), color=(0, 0, 0), width=1.5)
+    y += 18
+
+    lines = clean_content.split("\n")
+    for raw_line in lines:
+        line = raw_line.strip()
+        if not line:
+            y += 6
+            continue
+
+        is_h1 = line.startswith("# ") or (line.startswith("## ") and not line.startswith("### "))
+        is_h2 = line.startswith("### ") or line.startswith("#### ")
+        line_clean = re.sub(r"^#{1,4}\s*", "", line).strip()
+        line_clean = re.sub(r"\*\*([^*]+)\*\*", r"\1", line_clean)
+        line_clean = re.sub(r"\*([^*]+)\*", r"\1", line_clean).strip()
+
+        if not line_clean:
+            continue
+
+        if is_h1:
+            y += 12
+            if y > page_h - margin - 50:
+                page = add_page()
+                y = margin + 10
+            page.insert_text(fitz.Point(margin, y + 12), line_clean, fontsize=11.5, fontname="helv", color=(0, 0, 0))
+            page.draw_line(fitz.Point(margin, y + 16), fitz.Point(page_w - margin, y + 16), color=(0.75, 0.75, 0.75), width=0.8)
+            y += 24
+        elif is_h2:
+            y += 8
+            if y > page_h - margin - 40:
+                page = add_page()
+                y = margin + 10
+            page.insert_text(fitz.Point(margin, y + 10), line_clean, fontsize=10, fontname="helv", color=(0.1, 0.1, 0.1))
+            y += 18
+        else:
+            # Body text box
+            est_lines = max(1, len(line_clean) // 80 + 1)
+            est_h = est_lines * 14 + 4
+            if y + est_h > page_h - margin - 20:
+                page = add_page()
+                y = margin + 10
+
+            rect = fitz.Rect(margin, y, page_w - margin, y + est_h + 30)
+            rc = page.insert_textbox(rect, line_clean, fontsize=9.2, fontname="helv", color=(0.15, 0.15, 0.15))
+            y += max(14, abs(rc)) + 3
+
+    # Add page footer numbers
+    total_pages = len(doc)
+    for p_no in range(total_pages):
+        p = doc[p_no]
+        footer_text = f"StudyForge AI · Page {p_no + 1} of {total_pages}"
+        f_len = fitz.get_text_length(footer_text, fontname="helv", fontsize=8)
+        p.insert_text(fitz.Point((page_w - f_len) / 2, page_h - margin / 2), footer_text, fontsize=8, fontname="helv", color=(0.5, 0.5, 0.5))
+
+    pdf_buffer = BytesIO()
+    doc.save(pdf_buffer)
+    pdf_buffer.seek(0)
+
+    clean_filename = re.sub(r"[^a-zA-Z0-9_-]", "_", subject)
+    return send_file(
+        pdf_buffer,
+        mimetype="application/pdf",
+        as_attachment=True,
+        download_name=f"StudyForge_{clean_filename}_{difficulty}.pdf"
+    )
